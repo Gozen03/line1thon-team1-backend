@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.line1thon.jisiknamu.domain.study.repository.StudyImageRepository;
 import com.line1thon.jisiknamu.domain.user.dto.AuthRequest;
 import com.line1thon.jisiknamu.domain.user.entity.User;
 import com.line1thon.jisiknamu.domain.user.repository.UserRepository;
@@ -15,6 +16,7 @@ import com.line1thon.jisiknamu.global.error.ErrorCode;
 import com.line1thon.jisiknamu.global.security.JwtProvider;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -23,7 +25,8 @@ class UserServiceRaceTest {
 
     private final UserRepository userRepository = mock(UserRepository.class);
     private final UserService userService = new UserService(
-            userRepository, mock(PasswordEncoder.class), mock(JwtProvider.class));
+            userRepository, mock(PasswordEncoder.class), mock(JwtProvider.class),
+            mock(StudyImageRepository.class), mock(ApplicationEventPublisher.class));
 
     @Test
     void 가입이_UNIQUE_제약에_걸리면_NICKNAME_DUPLICATED() {

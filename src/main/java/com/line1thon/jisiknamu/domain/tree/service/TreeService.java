@@ -8,6 +8,7 @@ import com.line1thon.jisiknamu.domain.quiz.entity.QuizSet;
 import com.line1thon.jisiknamu.domain.quiz.entity.QuizSetStatus;
 import com.line1thon.jisiknamu.domain.quiz.entity.QuizSetType;
 import com.line1thon.jisiknamu.domain.quiz.repository.QuizSetRepository;
+import com.line1thon.jisiknamu.domain.study.repository.StudyImageRepository;
 import com.line1thon.jisiknamu.domain.study.repository.StudyRepository;
 import com.line1thon.jisiknamu.domain.study.repository.StudyRepository.TreeLastStudied;
 import com.line1thon.jisiknamu.domain.tree.dto.ForestResponse;
@@ -23,6 +24,7 @@ import com.line1thon.jisiknamu.domain.user.entity.User;
 import com.line1thon.jisiknamu.domain.user.repository.UserRepository;
 import com.line1thon.jisiknamu.global.error.BusinessException;
 import com.line1thon.jisiknamu.global.error.ErrorCode;
+import com.line1thon.jisiknamu.global.storage.ImagesDeletedEvent;
 import com.line1thon.jisiknamu.global.util.KstTime;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -30,6 +32,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,6 +50,8 @@ public class TreeService {
     private final LeafRepository leafRepository;
     private final StudyRepository studyRepository;
     private final QuizSetRepository quizSetRepository;
+    private final StudyImageRepository studyImageRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public ForestResponse getForest(Long userId) {
@@ -127,12 +132,14 @@ public class TreeService {
     }
 
     /**
-     * 잎·공부 기록·문제 세트는 DB의 ON DELETE CASCADE로 함께 지워진다.
-     * S3 사진 삭제는 S1에서 S3를 연동할 때 추가한다 (DB를 먼저 지우고, 사진 삭제 실패는 로그만 남긴다).
+     * 잎·공부 기록·문제 세트는 DB의 ON DELETE CASCADE로 함께 지워진다. 사진은 커밋 뒤에 지운다.
      */
     @Transactional
     public void deleteTree(Long userId, Long treeId) {
-        treeRepository.delete(getOwnedTree(userId, treeId));
+        Tree tree = getOwnedTree(userId, treeId);
+        List<String> imageKeys = studyImageRepository.findS3KeysByTreeId(treeId);
+        treeRepository.delete(tree);
+        eventPublisher.publishEvent(new ImagesDeletedEvent(imageKeys));
     }
 
     private Tree getOwnedTree(Long userId, Long treeId) {

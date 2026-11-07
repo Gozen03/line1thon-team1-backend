@@ -1,5 +1,6 @@
 package com.line1thon.jisiknamu.domain.user.service;
 
+import com.line1thon.jisiknamu.domain.study.repository.StudyImageRepository;
 import com.line1thon.jisiknamu.domain.user.dto.AuthRequest;
 import com.line1thon.jisiknamu.domain.user.dto.AuthResponse;
 import com.line1thon.jisiknamu.domain.user.dto.MyInfoResponse;
@@ -9,9 +10,12 @@ import com.line1thon.jisiknamu.domain.user.repository.UserRepository;
 import com.line1thon.jisiknamu.global.error.BusinessException;
 import com.line1thon.jisiknamu.global.error.ErrorCode;
 import com.line1thon.jisiknamu.global.security.JwtProvider;
+import com.line1thon.jisiknamu.global.storage.ImagesDeletedEvent;
 import com.line1thon.jisiknamu.global.util.KstTime;
+import java.util.List;
 import java.util.regex.Pattern;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,6 +32,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
+    private final StudyImageRepository studyImageRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public AuthResponse signUp(AuthRequest request) {
@@ -86,12 +92,14 @@ public class UserService {
     }
 
     /**
-     * 나무·공부 기록·문제 세트·잎·광고 횟수는 DB의 ON DELETE CASCADE로 함께 지워진다.
-     * 업로드 이미지(S3) 삭제는 S1에서 S3를 연동할 때 여기에 추가한다.
+     * 나무·공부 기록·문제 세트·잎·광고 횟수는 DB의 ON DELETE CASCADE로 함께 지워진다. 사진은 커밋 뒤에 지운다.
      */
     @Transactional
     public void withdraw(Long userId) {
-        userRepository.delete(getUser(userId));
+        User user = getUser(userId);
+        List<String> imageKeys = studyImageRepository.findS3KeysByUserId(userId);
+        userRepository.delete(user);
+        eventPublisher.publishEvent(new ImagesDeletedEvent(imageKeys));
     }
 
     private User getUser(Long userId) {

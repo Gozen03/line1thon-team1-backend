@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface LeafRepository extends JpaRepository<Leaf, Long> {
 
+    long countByTreeId(Long treeId);
+
     interface TreeLeafStats {
         Long getTreeId();
 

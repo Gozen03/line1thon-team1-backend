@@ -30,6 +30,8 @@ spring:
 server:
   port: 8080
   forward-headers-strategy: native   # nginx가 넘기는 X-Forwarded-*로 원래 주소·HTTPS 여부를 안다
+  tomcat:
+    max-swallow-size: -1   # 용량을 넘긴 업로드도 연결을 끊지 않고 IMAGE_INVALID로 응답한다 (전체 크기는 nginx가 막는다)
 
 jwt:
   secret: ${JWT_SECRET}
@@ -43,6 +45,8 @@ ai:
     url: ${AI_SERVER_URL:http://localhost:8000}
     timeout-seconds: 50
     internal-key: ${AI_INTERNAL_KEY}
+    mock: ${AI_MOCK:true}                  # AI 서버가 없을 때 가짜 응답을 쓴다
+    mock-delay-ms: ${AI_MOCK_DELAY_MS:0}   # 가짜 응답 대기 시간 (로딩 화면 확인용)
 
 aws:
   access-key: ${AWS_ACCESS_KEY:}
@@ -50,7 +54,8 @@ aws:
   region: ${AWS_REGION:ap-northeast-2}
 
 s3:
-  bucket: ${S3_BUCKET:}
+  bucket: ${S3_BUCKET:}                 # 비어 있으면 사진을 저장하지 않는 Mock을 쓴다
+  endpoint: ${S3_ENDPOINT:}             # S3 호환 서버로 시험할 때만 쓴다
   presigned-url-minutes: 10
 
 review:
