@@ -33,4 +33,8 @@ public class User extends BaseTimeEntity {
         this.nickname = nickname;
         this.passwordHash = passwordHash;
     }
+
+    public void changeNickname(String nickname) {
+        this.nickname = nickname;
+    }
 }

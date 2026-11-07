@@ -4,6 +4,9 @@ spring:
     name: jisik-namu-main
   config:
     import: optional:file:.env[.properties]
+  autoconfigure:
+    # 로그인은 JWT로 직접 처리하므로 기본 계정(로그에 찍히는 generated password)을 만들지 않는다
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
 
   datasource:
     url: ${DB_URL}

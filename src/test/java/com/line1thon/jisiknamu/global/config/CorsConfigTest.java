@@ -6,13 +6,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
-@WebMvcTest(properties = "cors.allowed-origins=http://localhost:5173,https://front.example.com")
+// CORS 설정만 보는 테스트라 Security 필터는 끈다. 필터까지 포함한 확인은 UserApiTest에 있다
+@WebMvcTest(controllers = CorsConfigTest.NoController.class,
+        properties = "cors.allowed-origins=http://localhost:5173,https://front.example.com")
+@AutoConfigureMockMvc(addFilters = false)
 class CorsConfigTest {
+
+    // 실제 컨트롤러를 올리지 않으려고 지정하는 빈 대상
+    static class NoController {
+    }
 
     @Autowired
     private MockMvc mockMvc;
