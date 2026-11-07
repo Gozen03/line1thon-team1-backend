@@ -1,11 +1,15 @@
 package com.line1thon.jisiknamu.global.response;
 
 import com.line1thon.jisiknamu.global.error.ErrorCode;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * 모든 응답의 공통 형식: { success, data, error }. 204 응답은 본문 없이 보낸다.
  */
-public record ApiResponse<T>(boolean success, T data, ErrorBody error) {
+public record ApiResponse<T>(
+        @Schema(description = "성공 여부") boolean success,
+        @Schema(description = "결과. 에러면 null") T data,
+        ErrorBody error) {
 
     public record ErrorBody(String code, String message) {
     }

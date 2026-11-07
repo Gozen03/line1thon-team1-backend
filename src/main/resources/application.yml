@@ -33,6 +33,13 @@ server:
   tomcat:
     max-swallow-size: -1   # 용량을 넘긴 업로드도 연결을 끊지 않고 IMAGE_INVALID로 응답한다 (전체 크기는 nginx가 막는다)
 
+springdoc:
+  override-with-generic-response: false   # 에러 응답은 @ApiErrors로 API마다 적는다
+  default-produces-media-type: application/json
+  swagger-ui:
+    persist-authorization: true           # 새로고침해도 Authorize에 넣은 토큰을 유지한다
+    operations-sorter: alpha
+
 jwt:
   secret: ${JWT_SECRET}
   expiration-days: 30
