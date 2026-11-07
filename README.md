@@ -12,3 +12,11 @@ Spring Boot 4.1.2 · Java 17 · Gradle · MySQL 8.4
 3. IntelliJ에서 `JisikNamuApplication` 실행 → http://localhost:8080
 
 DB를 처음부터 다시 만들려면: `docker compose -f docker-compose.local.yml down -v` 후 다시 `up -d`.
+
+## 배포
+
+EC2 1대에서 Docker Compose로 nginx와 메인 서버를 실행한다 (`deploy/`).
+
+- `main`에 push하면 GitHub Actions가 테스트 후 이미지를 GHCR에 올린다.
+- EC2에서 반영: `docker compose pull main && docker compose up -d main`
+- 환경변수는 `deploy/.env.main.example` 참고.

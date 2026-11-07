@@ -1,0 +1,13 @@
+# 이미지에 비밀값과 개발용 파일이 들어가지 않게 한다
+.env
+.env.*
+.git
+.gitignore
+.gradle
+.idea
+build
+out
+db
+deploy
+docker-compose.local.yml
+README.md

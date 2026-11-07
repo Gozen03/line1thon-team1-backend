@@ -1,0 +1,73 @@
+# main에 push하면 테스트를 돌리고, 통과하면 이미지를 GHCR에 올린다.
+# EC2 반영은 수동: docker compose pull main && docker compose up -d main
+name: main-server-image
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test-and-push:
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          # CI 안에서만 쓰는 테스트용 값이다
+          MYSQL_ROOT_PASSWORD: ci-root
+          MYSQL_DATABASE: jisik_namu
+          MYSQL_USER: ci
+          MYSQL_PASSWORD: ci
+        ports:
+          - 3307:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h127.0.0.1 -uroot -pci-root --silent"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      DB_URL: jdbc:mysql://127.0.0.1:3307/jisik_namu?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&allowPublicKeyRetrieval=true
+      DB_USERNAME: ci
+      DB_PASSWORD: ci
+      JWT_SECRET: Y2ktb25seS10ZXN0LWtleS1jaS1vbmx5LXRlc3Qta2V5LWNpLW9ubHktdGVzdC1rZXktY2ktb25seS10ZXN0LWtleQ==
+      AI_INTERNAL_KEY: ci-only
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Create tables
+        run: mysql -h127.0.0.1 -P3307 -uroot -pci-root < db/schema.sql
+
+      - name: Test
+        run: ./gradlew --no-daemon test
+
+      - name: Set image name
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/main-server" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:latest
+            ${{ env.IMAGE }}:${{ github.sha }}

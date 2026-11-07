@@ -29,6 +29,7 @@ spring:
 
 server:
   port: 8080
+  forward-headers-strategy: native   # nginx가 넘기는 X-Forwarded-*로 원래 주소·HTTPS 여부를 안다
 
 jwt:
   secret: ${JWT_SECRET}

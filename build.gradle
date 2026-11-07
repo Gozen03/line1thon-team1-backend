@@ -46,4 +46,6 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // 실제 서버(JisikNamuApplication.main)와 같은 시간대로 돌린다. CI 기본 시간대는 UTC다
+    systemProperty 'user.timezone', 'Asia/Seoul'
 }
