@@ -60,14 +60,14 @@ public class OpenApiConfig {
             - 시간은 한국 시간 ISO 8601입니다. 예: `2026-11-15T14:30:00+09:00`
             - 목록은 페이지 없이 전체를 줍니다.
             - 문제 응답에는 정답·해설·모범답안이 없습니다.
-            - S1·S2·S3는 AI를 기다리므로 로딩 화면을 띄우고, 프론트 타임아웃을 60초로 둡니다.
+            - S1·S2·S3·R2는 AI를 기다리므로 로딩 화면을 띄우고, 프론트 타임아웃을 60초로 둡니다.
             - `REQUEST_IN_PROGRESS`(409)는 버튼을 두 번 누른 경우입니다. 안내 없이 무시합니다.
 
             ### 지금 없는 API
-            L2(잎 상세), R0~R2(복습), A1(광고), S2의 복습 제출은 아직 만드는 중입니다.
+            A1(광고)은 아직 만드는 중입니다.
 
             ### AI Mock
-            AI 서버 연결 전이라 S1·S2·S3는 `(Mock)`이 붙은 가짜 문제와 피드백을 줍니다. 응답은 약 3초 뒤에 옵니다.
+            AI 서버 연결 전이라 S1·S2·S3·R2는 `(Mock)`이 붙은 가짜 문제와 피드백을 줍니다. 응답은 약 3초 뒤에 옵니다.
             정답은 S2 응답의 `answerIndex`로 확인할 수 있습니다. 아래 값을 넣으면 에러 화면을 확인할 수 있습니다.
 
             | 값 | 넣는 곳 | 결과 |
@@ -87,6 +87,7 @@ public class OpenApiConfig {
                 .addTagsItem(new Tag().name("회원").description("가입·로그인·내 정보. 닉네임과 숫자 비밀번호로 로그인합니다."))
                 .addTagsItem(new Tag().name("나무").description("과목 하나가 나무 한 그루입니다. 무료 3그루, 나무마다 잎 24개까지입니다."))
                 .addTagsItem(new Tag().name("공부·문제").description("공부 내용을 입력하면 7문제(객관식 6 + 서술형 1)를 받습니다."))
+                .addTagsItem(new Tag().name("잎·복습").description("지난 기록을 보고, 단풍잎·갈색잎을 3문제 복습으로 되살립니다."))
                 .components(new Components().addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")

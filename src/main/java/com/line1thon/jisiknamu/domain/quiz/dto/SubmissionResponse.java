@@ -18,7 +18,7 @@ public record SubmissionResponse(
         @Schema(description = "채점 대상 수", example = "6") int gradedCount,
         @Schema(description = "생기거나 바뀐 잎") LeafResult leaf,
         @Schema(description = "피드백") Feedback feedback,
-        @Schema(description = "문제별 결과. number 순서") List<ResultItem> results) {
+        @Schema(description = "문제별 결과. number 순서") List<ResultItem> results) implements SubmissionResult {
 
     public record LeafResult(
             @Schema(description = "잎 ID", example = "13") Long leafId,

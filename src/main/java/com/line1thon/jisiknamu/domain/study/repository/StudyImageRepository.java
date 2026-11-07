@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface StudyImageRepository extends JpaRepository<StudyImage, Long> {
 
-    @Query("select i.s3Key from StudyImage i where i.study.id = :studyId")
+    @Query("select i.s3Key from StudyImage i where i.study.id = :studyId order by i.sortOrder")
     List<String> findS3KeysByStudyId(@Param("studyId") Long studyId);
 
     @Query("select i.s3Key from StudyImage i where i.study.tree.id = :treeId")

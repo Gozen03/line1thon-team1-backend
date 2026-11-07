@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 public record AnswerSubmitRequest(
-        @Schema(description = "답 목록. 문제 수만큼 보낸다 (첫 풀이·재도전 7개)", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Schema(description = "답 목록. 문제 수만큼 보낸다 (첫 풀이·재도전 7개, 복습 3개)", requiredMode = Schema.RequiredMode.REQUIRED)
         List<AnswerItem> answers) {
 
     public record AnswerItem(

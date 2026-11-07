@@ -42,4 +42,42 @@ public interface LeafRepository extends JpaRepository<Leaf, Long> {
 
     @Query("select l from Leaf l join fetch l.study where l.tree.id = :treeId order by l.position asc")
     List<Leaf> findAllWithStudyByTreeId(@Param("treeId") Long treeId);
+
+    @Query("select l from Leaf l join fetch l.study join fetch l.tree where l.id = :id")
+    Optional<Leaf> findWithStudyAndTreeById(@Param("id") Long id);
+
+    // 아래 복습 가능 조건은 Leaf.isReviewAvailable과 같다
+    @Query("""
+            select l from Leaf l join fetch l.study s join fetch l.tree t
+            where t.user.id = :userId and l.leafType in :grades and l.reviewDueAt <= :now
+            order by s.createdAt, l.id
+            """)
+    List<Leaf> findReviewableByUserId(@Param("userId") Long userId,
+                                      @Param("grades") Collection<LeafGrade> grades,
+                                      @Param("now") LocalDateTime now);
+
+    @Query("""
+            select l from Leaf l join fetch l.study s
+            where l.tree.id = :treeId and l.leafType in :grades and l.reviewDueAt <= :now
+            order by s.createdAt, l.id
+            """)
+    List<Leaf> findReviewableByTreeId(@Param("treeId") Long treeId,
+                                      @Param("grades") Collection<LeafGrade> grades,
+                                      @Param("now") LocalDateTime now);
+
+    @Query("""
+            select count(l) from Leaf l
+            where l.tree.id = :treeId and l.leafType in :grades and l.reviewDueAt <= :now
+            """)
+    long countReviewableByTreeId(@Param("treeId") Long treeId,
+                                 @Param("grades") Collection<LeafGrade> grades,
+                                 @Param("now") LocalDateTime now);
+
+    @Query("""
+            select min(l.reviewDueAt) from Leaf l
+            where l.tree.user.id = :userId and l.leafType in :grades and l.reviewDueAt > :now
+            """)
+    LocalDateTime findNextReviewAt(@Param("userId") Long userId,
+                                   @Param("grades") Collection<LeafGrade> grades,
+                                   @Param("now") LocalDateTime now);
 }

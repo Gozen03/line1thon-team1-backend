@@ -17,6 +17,13 @@ public interface QuizSetRepository extends JpaRepository<QuizSet, Long> {
 
     List<QuizSet> findAllByStudyTreeIdAndStatusAndTypeIn(Long treeId, QuizSetStatus status, Collection<QuizSetType> types);
 
+    List<QuizSet> findAllByStudyIdAndStatusOrderByIdAsc(Long studyId, QuizSetStatus status);
+
+    Optional<QuizSet> findFirstByStudyIdAndStatusAndTypeInOrderByIdDesc(
+            Long studyId, QuizSetStatus status, Collection<QuizSetType> types);
+
+    Optional<QuizSet> findFirstByLeafIdAndStatusAndType(Long leafId, QuizSetStatus status, QuizSetType type);
+
     @Query("select coalesce(max(q.attemptNo), 0) from QuizSet q where q.study.id = :studyId and q.type = :type")
     int findMaxAttemptNo(@Param("studyId") Long studyId, @Param("type") QuizSetType type);
 

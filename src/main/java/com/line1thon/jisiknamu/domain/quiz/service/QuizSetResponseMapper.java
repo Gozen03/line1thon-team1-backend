@@ -18,11 +18,14 @@ public class QuizSetResponseMapper {
     public QuizSetResponse toResponse(QuizSet quizSet, List<Question> questions) {
         Study study = quizSet.getStudy();
         return new QuizSetResponse(study.getId(), quizSet.getId(), quizSet.getType(), study.getTree().getId(),
-                study.getSubjectName(), study.getStudyLevel(),
-                questions.stream()
-                        .map(question -> new QuizSetResponse.QuestionItem(question.getId(), question.getNumber(),
-                                question.getDifficulty(), question.getType(), question.getTopic(),
-                                question.getContent(), jsonLists.toList(question.getOptions())))
-                        .toList());
+                study.getSubjectName(), study.getStudyLevel(), toItems(questions));
+    }
+
+    public List<QuizSetResponse.QuestionItem> toItems(List<Question> questions) {
+        return questions.stream()
+                .map(question -> new QuizSetResponse.QuestionItem(question.getId(), question.getNumber(),
+                        question.getDifficulty(), question.getType(), question.getTopic(),
+                        question.getContent(), jsonLists.toList(question.getOptions())))
+                .toList();
     }
 }

@@ -8,7 +8,9 @@ import com.line1thon.jisiknamu.domain.leaf.repository.LeafRepository;
 import com.line1thon.jisiknamu.domain.leaf.repository.LeafTopicRepository;
 import com.line1thon.jisiknamu.domain.quiz.dto.AnswerSubmitRequest;
 import com.line1thon.jisiknamu.domain.quiz.dto.AnswerSubmitRequest.AnswerItem;
+import com.line1thon.jisiknamu.domain.quiz.dto.ReviewSubmissionResponse;
 import com.line1thon.jisiknamu.domain.quiz.dto.SubmissionResponse;
+import com.line1thon.jisiknamu.domain.quiz.dto.SubmissionResult;
 import com.line1thon.jisiknamu.domain.quiz.entity.Answer;
 import com.line1thon.jisiknamu.domain.quiz.entity.Question;
 import com.line1thon.jisiknamu.domain.quiz.entity.QuestionType;
@@ -25,6 +27,7 @@ import com.line1thon.jisiknamu.domain.tree.repository.TreeRepository;
 import com.line1thon.jisiknamu.global.ai.AiClient;
 import com.line1thon.jisiknamu.global.ai.FeedbackRequest;
 import com.line1thon.jisiknamu.global.ai.FeedbackResult;
+import com.line1thon.jisiknamu.global.ai.ReviewFeedbackRequest;
 import com.line1thon.jisiknamu.global.concurrency.InProgressGuard;
 import com.line1thon.jisiknamu.global.error.BusinessException;
 import com.line1thon.jisiknamu.global.error.ErrorCode;
@@ -48,6 +51,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class SubmissionService {
 
     private static final int ESSAY_MAX_LENGTH = 1000;
+    // 시연 모드는 바로 다시 복습할 수 있어서 "내일"처럼 날짜를 단정하지 않는다
+    private static final String REVIEW_FAILED_SUMMARY = "아직 조금 헷갈려요. 한 번 더 복습하면 잘할 수 있어요.";
 
     private final QuizSetRepository quizSetRepository;
     private final QuestionRepository questionRepository;
@@ -60,13 +65,15 @@ public class SubmissionService {
     private final TransactionTemplate transactionTemplate;
     private final JsonLists jsonLists;
     private final int reviewDelayDays;
+    private final int reviewRetryDelayDays;
 
     public SubmissionService(QuizSetRepository quizSetRepository, QuestionRepository questionRepository,
                              AnswerRepository answerRepository, TreeRepository treeRepository,
                              LeafRepository leafRepository, LeafTopicRepository leafTopicRepository,
                              AiClient aiClient, InProgressGuard inProgressGuard,
                              TransactionTemplate transactionTemplate, JsonLists jsonLists,
-                             @Value("${review.delay-days}") int reviewDelayDays) {
+                             @Value("${review.delay-days}") int reviewDelayDays,
+                             @Value("${review.retry-delay-days}") int reviewRetryDelayDays) {
         this.quizSetRepository = quizSetRepository;
         this.questionRepository = questionRepository;
         this.answerRepository = answerRepository;
@@ -78,16 +85,75 @@ public class SubmissionService {
         this.transactionTemplate = transactionTemplate;
         this.jsonLists = jsonLists;
         this.reviewDelayDays = reviewDelayDays;
+        this.reviewRetryDelayDays = reviewRetryDelayDays;
     }
 
-    public SubmissionResponse submit(Long userId, Long quizSetId, AnswerSubmitRequest request) {
+    public SubmissionResult submit(Long userId, Long quizSetId, AnswerSubmitRequest request) {
         // 다른 회원의 요청이 내 세트를 막지 못하도록 소유자 확인 뒤에 잠근다
         transactionTemplate.executeWithoutResult(status -> requireOwner(getQuizSet(quizSetId), userId));
         return inProgressGuard.run("quizSet:" + quizSetId, () -> {
             Graded graded = transactionTemplate.execute(status -> grade(quizSetId, request));
+            if (graded.quizSetType() == QuizSetType.REVIEW) {
+                return submitReview(quizSetId, graded);
+            }
             FeedbackResult feedback = aiClient.generateFeedback(toFeedbackRequest(graded));
             return transactionTemplate.execute(status -> save(quizSetId, graded, feedback));
         });
+    }
+
+    /**
+     * 복습 제출. AI는 성공했을 때만 부르고, 실패하면 고정 문구를 쓰며 잎의 총평은 바꾸지 않는다.
+     */
+    private ReviewSubmissionResponse submitReview(Long quizSetId, Graded graded) {
+        boolean passed = graded.correctCount() == graded.gradedCount();
+        String summary = passed
+                ? aiClient.generateReviewFeedback(toReviewFeedbackRequest(graded)).summary()
+                : REVIEW_FAILED_SUMMARY;
+        return transactionTemplate.execute(status -> saveReview(quizSetId, graded, passed, summary));
+    }
+
+    private ReviewSubmissionResponse saveReview(Long quizSetId, Graded graded, boolean passed, String summary) {
+        // AI를 기다리는 사이 나무가 삭제됐을 수 있다
+        treeRepository.findByIdForUpdate(graded.treeId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.QUIZ_SET_NOT_FOUND));
+        QuizSet quizSet = getQuizSet(quizSetId);
+        requireSubmittable(quizSet);
+        Leaf leaf = quizSet.getLeaf();
+        LocalDateTime now = KstTime.now();
+
+        List<String> recoveredTopics = List.of();
+        LocalDateTime reviewDueAt = null;
+        if (passed) {
+            // 잎이 초록잎이 되므로 출제된 주제만이 아니라 약한 주제 전부를 이해한 것으로 바꾼다 (11/8 결정)
+            List<LeafTopic> weakTopics = leafTopicRepository.findAllByLeafIdAndStatusOrderByIdAsc(leaf.getId(), TopicStatus.WEAK);
+            weakTopics.forEach(LeafTopic::recover);
+            recoveredTopics = weakTopics.stream().map(LeafTopic::getTopic).toList();
+            leaf.recover(summary, now);
+        } else {
+            reviewDueAt = now.plusDays(reviewRetryDelayDays);
+            leaf.postponeReview(reviewDueAt);
+        }
+        saveAnswers(graded, null);
+        quizSet.submit(graded.correctCount(), now);
+
+        return new ReviewSubmissionResponse(quizSetId, QuizSetType.REVIEW, graded.correctCount(), graded.gradedCount(), passed,
+                new ReviewSubmissionResponse.LeafResult(leaf.getId(), graded.review().beforeGrade(), leaf.getLeafType(),
+                        KstTime.toOffset(graded.review().studiedAt()), KstTime.toOffset(reviewDueAt)),
+                recoveredTopics, summary,
+                leafRepository.countReviewableByTreeId(graded.treeId(), LeafGrade.REVIEWABLE, now),
+                graded.questions().stream()
+                        .map(question -> toResultItem(question, graded.answers().get(question.getId())))
+                        .toList());
+    }
+
+    private ReviewFeedbackRequest toReviewFeedbackRequest(Graded graded) {
+        return new ReviewFeedbackRequest(graded.subjectName(), graded.review().originalSummary(),
+                KstTime.toOffset(graded.review().studiedAt()), KstTime.toOffset(KstTime.now()), true,
+                graded.correctCount(), graded.gradedCount(),
+                graded.questions().stream()
+                        .map(question -> new ReviewFeedbackRequest.TopicResult(question.getTopic(),
+                                isCorrect(question, graded.answers().get(question.getId()))))
+                        .toList());
     }
 
     private Graded grade(Long quizSetId, AnswerSubmitRequest request) {
@@ -116,9 +182,12 @@ public class SubmissionService {
         // 같은 주제를 맞히기도 틀리기도 했으면 약한 주제로 본다
         strengths.removeAll(weaknesses);
 
+        ReviewInfo review = quizSet.getType() == QuizSetType.REVIEW
+                ? new ReviewInfo(quizSet.getLeaf().getLeafType(), quizSet.getLeaf().getFeedbackSummary(), study.getCreatedAt())
+                : null;
         return new Graded(study.getTree().getId(), quizSet.getType(), study.getSubjectName(), study.getStudyLevel(),
                 questions, answers, correctCount, gradedCount, LeafGrade.fromCorrectCount(correctCount),
-                List.copyOf(strengths), List.copyOf(weaknesses));
+                List.copyOf(strengths), List.copyOf(weaknesses), review);
     }
 
     private SubmissionResponse save(Long quizSetId, Graded graded, FeedbackResult feedback) {
@@ -134,7 +203,7 @@ public class SubmissionService {
                 ? createLeaf(tree, quizSet.getStudy(), graded, feedback, reviewDueAt)
                 : applyRetry(quizSet.getStudy(), graded, feedback, reviewDueAt);
         saveTopics(leaf, graded);
-        saveAnswers(graded, feedback);
+        saveAnswers(graded, feedback.essayFeedback());
         quizSet.submit(graded.correctCount(), now);
 
         return toResponse(quizSetId, graded, feedback, leaf, reviewDueAt, leafRepository.countByTreeId(tree.getId()));
@@ -168,7 +237,7 @@ public class SubmissionService {
                 LeafTopic.builder().leaf(leaf).topic(topic).status(TopicStatus.WEAK).build()));
     }
 
-    private void saveAnswers(Graded graded, FeedbackResult feedback) {
+    private void saveAnswers(Graded graded, String essayFeedback) {
         for (Question question : graded.questions()) {
             AnswerItem answer = graded.answers().get(question.getId());
             boolean multipleChoice = question.getType() == QuestionType.MULTIPLE_CHOICE;
@@ -177,7 +246,7 @@ public class SubmissionService {
                     .selectedIndex(multipleChoice ? answer.selectedIndex() : null)
                     .essayText(multipleChoice ? null : essayText(answer))
                     .correct(multipleChoice ? isCorrect(question, answer) : null)
-                    .aiFeedback(multipleChoice ? null : feedback.essayFeedback())
+                    .aiFeedback(multipleChoice ? null : essayFeedback)
                     .build());
         }
     }
@@ -280,10 +349,6 @@ public class SubmissionService {
         if (quizSet.getStatus() == QuizSetStatus.SUBMITTED) {
             throw new BusinessException(ErrorCode.ALREADY_SUBMITTED);
         }
-        if (quizSet.getType() == QuizSetType.REVIEW) {
-            // 복습 세트를 만드는 R2가 아직 없어 정상 요청으로는 오지 않는다
-            throw new UnsupportedOperationException("복습 제출은 아직 구현되지 않았습니다.");
-        }
         if (quizSet.getType() == QuizSetType.RETRY) {
             getBudLeaf(quizSet.getStudy());
         }
@@ -297,6 +362,9 @@ public class SubmissionService {
 
     private record Graded(Long treeId, QuizSetType quizSetType, String subjectName, StudyLevel studyLevel,
                           List<Question> questions, Map<Long, AnswerItem> answers, int correctCount, int gradedCount,
-                          LeafGrade grade, List<String> strengths, List<String> weaknesses) {
+                          LeafGrade grade, List<String> strengths, List<String> weaknesses, ReviewInfo review) {
+    }
+
+    private record ReviewInfo(LeafGrade beforeGrade, String originalSummary, LocalDateTime studiedAt) {
     }
 }

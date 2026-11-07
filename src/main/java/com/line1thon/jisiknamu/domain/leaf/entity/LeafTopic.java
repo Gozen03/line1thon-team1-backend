@@ -43,4 +43,8 @@ public class LeafTopic {
         this.topic = topic;
         this.status = status;
     }
+
+    public void recover() {
+        this.status = TopicStatus.RECOVERED;
+    }
 }
