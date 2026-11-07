@@ -72,4 +72,12 @@ public class Leaf extends BaseTimeEntity {
         this.feedbackSummary = feedbackSummary;
         this.reviewDueAt = reviewDueAt;
     }
+
+    public boolean isReviewAvailable(LocalDateTime now) {
+        return LeafGrade.REVIEWABLE.contains(leafType) && reviewDueAt != null && !reviewDueAt.isAfter(now);
+    }
+
+    public boolean isReviewed() {
+        return recoveredAt != null;
+    }
 }

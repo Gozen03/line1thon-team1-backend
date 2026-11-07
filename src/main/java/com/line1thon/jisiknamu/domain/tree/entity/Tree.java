@@ -54,4 +54,12 @@ public class Tree extends BaseTimeEntity {
         this.shape = shape;
         this.paid = false; // MVP는 결제가 없다
     }
+
+    public void changeSubjectName(String subjectName) {
+        this.subjectName = subjectName;
+    }
+
+    public void changeStudyLevel(StudyLevel studyLevel) {
+        this.studyLevel = studyLevel;
+    }
 }
