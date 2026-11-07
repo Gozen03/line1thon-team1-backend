@@ -5,6 +5,7 @@ import com.line1thon.jisiknamu.domain.leaf.entity.LeafGrade;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,11 @@ import org.springframework.data.repository.query.Param;
 public interface LeafRepository extends JpaRepository<Leaf, Long> {
 
     long countByTreeId(Long treeId);
+
+    Optional<Leaf> findByStudyId(Long studyId);
+
+    @Query("select coalesce(max(l.position), 0) from Leaf l where l.tree.id = :treeId")
+    int findMaxPositionByTreeId(@Param("treeId") Long treeId);
 
     interface TreeLeafStats {
         Long getTreeId();

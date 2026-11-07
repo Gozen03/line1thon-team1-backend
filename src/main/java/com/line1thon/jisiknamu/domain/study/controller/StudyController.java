@@ -71,6 +71,25 @@ public class StudyController {
                 new StudyCreateRequest(inputType, images, content, memo)));
     }
 
+    @Operation(summary = "S3. 꽃봉오리 재도전 (새 7문제)", description = """
+            요청 본문이 없습니다. 이 공부의 잎이 꽃봉오리(`BUD`)일 때만 쓸 수 있고 횟수 제한은 없습니다.
+
+            - 저장해 둔 공부 내용과, 공부할 때의 과목 이름·공부 수준으로 출제합니다. 사진을 다시 올리지 않습니다.
+            - 약한 주제를 쉬움·보통 문제에 더 반영하고, 이전 세트와 같은 문제는 내지 않습니다.
+            - 이전에 제출한 세트는 기록으로 남습니다.
+            - 같은 나무에 제출하지 않은 첫 풀이·재도전 세트가 있으면 지우고 새로 만듭니다.
+            - 답은 **S2**로 제출하고, `quizSetType`은 `RETRY`입니다.
+            """)
+    @ApiErrors({ErrorCode.INVALID_REQUEST, ErrorCode.FORBIDDEN, ErrorCode.STUDY_NOT_FOUND, ErrorCode.NOT_BUD_RESULT,
+            ErrorCode.REQUEST_IN_PROGRESS, ErrorCode.AI_SERVER_ERROR, ErrorCode.AI_TIMEOUT})
+    @ResponseStatus(HttpStatus.CREATED)
+    @PostMapping("/api/v1/studies/{studyId}/retry")
+    public ApiResponse<QuizSetResponse> retry(
+            @Parameter(hidden = true) @AuthenticationPrincipal Long userId,
+            @Parameter(description = "공부 기록 ID", example = "31") @PathVariable Long studyId) {
+        return ApiResponse.success(studyService.createRetry(userId, studyId));
+    }
+
     /**
      * Swagger에 multipart 폼을 보여 주기 위한 형식. 실제 값은 위 @RequestParam으로 받는다.
      */

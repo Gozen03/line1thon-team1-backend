@@ -75,6 +75,15 @@ public class Leaf extends BaseTimeEntity {
         this.reviewDueAt = reviewDueAt;
     }
 
+    /** 재도전 결과로 같은 잎의 등급을 바꾼다. 재도전 결과가 이 잎의 처음 등급이 된다. */
+    public void applyRetry(LeafGrade grade, int correctCount, String feedbackSummary, LocalDateTime reviewDueAt) {
+        this.leafType = grade;
+        this.originalType = grade;
+        this.firstCorrectCount = correctCount;
+        this.feedbackSummary = feedbackSummary;
+        this.reviewDueAt = reviewDueAt;
+    }
+
     public boolean isReviewAvailable(LocalDateTime now) {
         return LeafGrade.REVIEWABLE.contains(leafType) && reviewDueAt != null && !reviewDueAt.isAfter(now);
     }

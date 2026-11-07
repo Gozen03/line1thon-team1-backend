@@ -3,11 +3,7 @@ package com.line1thon.jisiknamu.global.ai;
 import java.util.List;
 
 /**
- * API 명세서 11장의 문제 출제 응답.
+ * AI1 응답. extractedText는 IMAGE일 때만 값이 있다. 사진을 못 읽으면 응답 대신 NOTE_UNREADABLE을 던진다.
  */
-public record GeneratedQuiz(boolean readable, String extractedText, List<GeneratedQuestion> questions) {
-
-    public static GeneratedQuiz unreadable() {
-        return new GeneratedQuiz(false, null, List.of());
-    }
+public record GeneratedQuiz(String extractedText, List<GeneratedQuestion> questions) {
 }

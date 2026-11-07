@@ -1,7 +1,10 @@
 package com.line1thon.jisiknamu.domain.study.service;
 
 import com.line1thon.jisiknamu.domain.leaf.entity.Leaf;
+import com.line1thon.jisiknamu.domain.leaf.entity.LeafGrade;
+import com.line1thon.jisiknamu.domain.leaf.entity.TopicStatus;
 import com.line1thon.jisiknamu.domain.leaf.repository.LeafRepository;
+import com.line1thon.jisiknamu.domain.leaf.repository.LeafTopicRepository;
 import com.line1thon.jisiknamu.domain.quiz.dto.QuizSetResponse;
 import com.line1thon.jisiknamu.domain.quiz.entity.Question;
 import com.line1thon.jisiknamu.domain.quiz.entity.QuestionType;
@@ -62,6 +65,7 @@ public class StudyService {
 
     private final TreeRepository treeRepository;
     private final LeafRepository leafRepository;
+    private final LeafTopicRepository leafTopicRepository;
     private final StudyRepository studyRepository;
     private final StudyImageRepository studyImageRepository;
     private final QuizSetRepository quizSetRepository;
@@ -94,12 +98,9 @@ public class StudyService {
                 uploadedKeys.add(upload(treeId, image));
             }
             GeneratedQuiz quiz = aiClient.generateQuiz(new QuizGenerateRequest(
-                    tree.subjectName(), tree.studyLevel(), input.inputType(),
+                    QuizSetType.INITIAL, tree.subjectName(), tree.studyLevel(), input.inputType(),
                     uploadedKeys.stream().map(imageStorage::createReadUrl).toList(),
-                    input.content(), input.memo(), List.of()));
-            if (!quiz.readable()) {
-                throw new BusinessException(ErrorCode.NOTE_UNREADABLE);
-            }
+                    input.content(), input.memo(), List.of(), List.of()));
             return transactionTemplate.execute(status -> save(treeId, input, uploadedKeys, quiz));
         } catch (RuntimeException e) {
             // 에러가 나면 공부 기록을 저장하지 않고, 이미 올린 사진도 지운다
@@ -125,8 +126,56 @@ public class StudyService {
             studyImageRepository.save(StudyImage.builder()
                     .study(study).s3Key(uploadedKeys.get(i)).sortOrder(i + 1).build());
         }
+        return saveQuizSet(study, QuizSetType.INITIAL, 1, quiz);
+    }
+
+    /**
+     * S3. 저장해 둔 공부 내용으로 새 7문제를 받는다. 나무 단위로 잠가 S1과 동시에 돌지 않는다.
+     */
+    public QuizSetResponse createRetry(Long userId, Long studyId) {
+        RetrySource source = transactionTemplate.execute(status -> getRetrySource(userId, studyId));
+        return inProgressGuard.run("tree:" + source.treeId(), () -> {
+            GeneratedQuiz quiz = aiClient.generateQuiz(new QuizGenerateRequest(
+                    QuizSetType.RETRY, source.subjectName(), source.studyLevel(), InputType.TEXT, List.of(),
+                    source.content(), source.memo(), source.weakTopics(), source.excludeQuestions()));
+            return transactionTemplate.execute(status -> saveRetry(source.treeId(), studyId, quiz));
+        });
+    }
+
+    private RetrySource getRetrySource(Long userId, Long studyId) {
+        Study study = studyRepository.findById(studyId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDY_NOT_FOUND));
+        if (!study.getTree().getUser().getId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+        Leaf leaf = getBudLeaf(studyId);
+        String content = study.getTextContent() != null ? study.getTextContent() : study.getExtractedText();
+        return new RetrySource(study.getTree().getId(), study.getSubjectName(), study.getStudyLevel(), content,
+                study.getMemo(), leafTopicRepository.findTopics(leaf.getId(), TopicStatus.WEAK),
+                questionRepository.findContents(studyId, PENDING_QUIZ_SET_TYPES));
+    }
+
+    private QuizSetResponse saveRetry(Long treeId, Long studyId, GeneratedQuiz quiz) {
+        // AI를 기다리는 사이 나무가 삭제됐을 수 있다. 저장하는 동안 삭제되지 않도록 잠근다
+        treeRepository.findByIdForUpdate(treeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDY_NOT_FOUND));
+        Study study = studyRepository.findById(studyId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STUDY_NOT_FOUND));
+        getBudLeaf(studyId);
+        removePendingQuizSets(treeId);
+        int attemptNo = quizSetRepository.findMaxAttemptNo(studyId, QuizSetType.RETRY) + 1;
+        return saveQuizSet(study, QuizSetType.RETRY, attemptNo, quiz);
+    }
+
+    private Leaf getBudLeaf(Long studyId) {
+        return leafRepository.findByStudyId(studyId)
+                .filter(leaf -> leaf.getLeafType() == LeafGrade.BUD)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_BUD_RESULT));
+    }
+
+    private QuizSetResponse saveQuizSet(Study study, QuizSetType type, int attemptNo, GeneratedQuiz quiz) {
         QuizSet quizSet = quizSetRepository.save(QuizSet.builder()
-                .study(study).type(QuizSetType.INITIAL).attemptNo(1).gradedCount(INITIAL_GRADED_COUNT).build());
+                .study(study).type(type).attemptNo(attemptNo).gradedCount(INITIAL_GRADED_COUNT).build());
         List<Question> questions = questionRepository.saveAll(quiz.questions().stream()
                 .map(generated -> toQuestion(quizSet, generated))
                 .toList());
@@ -147,6 +196,8 @@ public class StudyService {
                 studyRepository.delete(pending.getStudy());
             }
         }
+        // 지운 세트의 attempt_no를 새 세트가 다시 쓸 수 있으니 먼저 DB에 반영한다 (UNIQUE 제약)
+        quizSetRepository.flush();
         if (!imageKeys.isEmpty()) {
             eventPublisher.publishEvent(new ImagesDeletedEvent(imageKeys));
         }
@@ -246,6 +297,10 @@ public class StudyService {
     }
 
     private record TreeSnapshot(String subjectName, StudyLevel studyLevel) {
+    }
+
+    private record RetrySource(Long treeId, String subjectName, StudyLevel studyLevel, String content, String memo,
+                               List<String> weakTopics, List<String> excludeQuestions) {
     }
 
     private record StudyInput(InputType inputType, List<ImageInput> images, String content, String memo) {

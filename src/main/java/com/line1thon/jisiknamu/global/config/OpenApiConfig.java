@@ -60,22 +60,22 @@ public class OpenApiConfig {
             - 시간은 한국 시간 ISO 8601입니다. 예: `2026-11-15T14:30:00+09:00`
             - 목록은 페이지 없이 전체를 줍니다.
             - 문제 응답에는 정답·해설·모범답안이 없습니다.
-            - S1은 AI를 기다리므로 로딩 화면을 띄우고, 프론트 타임아웃을 60초로 둡니다.
+            - S1·S2·S3는 AI를 기다리므로 로딩 화면을 띄우고, 프론트 타임아웃을 60초로 둡니다.
             - `REQUEST_IN_PROGRESS`(409)는 버튼을 두 번 누른 경우입니다. 안내 없이 무시합니다.
 
             ### 지금 없는 API
-            S2(답 제출·채점), S3(재도전), L2(잎 상세), R0~R2(복습), A1(광고)은 아직 만드는 중입니다.
+            L2(잎 상세), R0~R2(복습), A1(광고), S2의 복습 제출은 아직 만드는 중입니다.
 
             ### AI Mock
-            AI 서버 연결 전이라 S1은 `(Mock)`이 붙은 가짜 문제를 줍니다. 응답은 약 3초 뒤에 옵니다.
-            메모에 아래 값을 넣으면 에러 화면을 확인할 수 있습니다.
+            AI 서버 연결 전이라 S1·S2·S3는 `(Mock)`이 붙은 가짜 문제와 피드백을 줍니다. 응답은 약 3초 뒤에 옵니다.
+            정답은 S2 응답의 `answerIndex`로 확인할 수 있습니다. 아래 값을 넣으면 에러 화면을 확인할 수 있습니다.
 
-            | 메모 | 결과 |
-            | --- | --- |
-            | `[mock:unreadable]` | `NOTE_UNREADABLE` (422) |
-            | `[mock:short]` | `CONTENT_TOO_SHORT` (422) |
-            | `[mock:error]` | `AI_SERVER_ERROR` (502) |
-            | `[mock:timeout]` | `AI_TIMEOUT` (504) |
+            | 값 | 넣는 곳 | 결과 |
+            | --- | --- | --- |
+            | `[mock:unreadable]` | S1 메모 | `NOTE_UNREADABLE` (422) |
+            | `[mock:short]` | S1 메모 | `CONTENT_TOO_SHORT` (422) |
+            | `[mock:error]` | S1 메모, S2 서술형 답 | `AI_SERVER_ERROR` (502) |
+            | `[mock:timeout]` | S1 메모, S2 서술형 답 | `AI_TIMEOUT` (504) |
 
             ### 에러 코드 전체
             """;

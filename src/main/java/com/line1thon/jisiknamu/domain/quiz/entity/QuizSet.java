@@ -66,4 +66,10 @@ public class QuizSet extends BaseTimeEntity {
         this.gradedCount = gradedCount;
         this.status = QuizSetStatus.CREATED;
     }
+
+    public void submit(int correctCount, LocalDateTime submittedAt) {
+        this.correctCount = correctCount;
+        this.submittedAt = submittedAt;
+        this.status = QuizSetStatus.SUBMITTED;
+    }
 }

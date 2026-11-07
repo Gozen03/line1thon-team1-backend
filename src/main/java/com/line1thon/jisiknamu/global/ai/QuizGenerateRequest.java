@@ -1,12 +1,15 @@
 package com.line1thon.jisiknamu.global.ai;
 
+import com.line1thon.jisiknamu.domain.quiz.entity.QuizSetType;
 import com.line1thon.jisiknamu.domain.study.entity.InputType;
 import com.line1thon.jisiknamu.domain.tree.entity.StudyLevel;
 import java.util.List;
 
 /**
- * API 명세서 11장의 문제 출제 요청. 사진이면 imageUrls(Presigned URL), 텍스트면 content를 쓴다.
+ * AI1 요청. 재도전은 항상 TEXT이고 content에 저장해 둔 공부 내용을 넣는다.
+ * weakTopics는 재도전의 직전 약한 주제, excludeQuestions는 이전 세트의 문제 본문이다.
  */
-public record QuizGenerateRequest(String subjectName, StudyLevel studyLevel, InputType inputType,
-                                  List<String> imageUrls, String content, String memo, List<String> weakTopics) {
+public record QuizGenerateRequest(QuizSetType quizSetType, String subjectName, StudyLevel studyLevel,
+                                  InputType inputType, List<String> imageUrls, String content, String memo,
+                                  List<String> weakTopics, List<String> excludeQuestions) {
 }
