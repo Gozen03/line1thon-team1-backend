@@ -36,7 +36,8 @@ class S3ImageStorageManualTest {
         assertThat(tampered.statusCode()).isEqualTo(403);
 
         storage.delete(key);
-        assertThat(get(url).statusCode()).isEqualTo(404);
+        // ListBucket 권한이 없으면 실제 S3는 없는 파일에 404 대신 403을 준다
+        assertThat(get(url).statusCode()).isIn(403, 404);
     }
 
     private HttpResponse<byte[]> get(String url) throws Exception {
