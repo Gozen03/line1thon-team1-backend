@@ -4,10 +4,11 @@ services:
     image: nginx:1.27-alpine
     ports:
       - "80:80"
-      # - "443:443"   # 인증서를 넣은 뒤 연다
+      - "443:443"
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      # - ./nginx/certs:/etc/nginx/certs:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
     depends_on:
       - main
     restart: always
