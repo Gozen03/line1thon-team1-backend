@@ -124,7 +124,7 @@ public class SubmissionService {
         List<String> recoveredTopics = List.of();
         LocalDateTime reviewDueAt = null;
         if (passed) {
-            // 잎이 초록잎이 되므로 출제된 주제만이 아니라 약한 주제 전부를 이해한 것으로 바꾼다 (11/8 결정)
+            // 잎이 싱싱한 잎이 되므로 출제된 주제만이 아니라 약한 주제 전부를 이해한 것으로 바꾼다 (11/8 결정)
             List<LeafTopic> weakTopics = leafTopicRepository.findAllByLeafIdAndStatusOrderByIdAsc(leaf.getId(), TopicStatus.WEAK);
             weakTopics.forEach(LeafTopic::recover);
             recoveredTopics = weakTopics.stream().map(LeafTopic::getTopic).toList();

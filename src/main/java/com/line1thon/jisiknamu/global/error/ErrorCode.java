@@ -39,7 +39,7 @@ public enum ErrorCode {
     ANSWER_COUNT_MISMATCH(HttpStatus.BAD_REQUEST, "제출한 답이 문제 세트와 맞지 않습니다."),
     ALREADY_SUBMITTED(HttpStatus.CONFLICT, "이미 제출한 문제 세트입니다."),
     REQUEST_IN_PROGRESS(HttpStatus.CONFLICT, "요청을 처리하고 있습니다. 잠시만 기다려 주세요."),
-    NOT_BUD_RESULT(HttpStatus.CONFLICT, "꽃봉오리일 때만 재도전할 수 있습니다."),
+    NOT_BUD_RESULT(HttpStatus.CONFLICT, "잎눈일 때만 재도전할 수 있습니다."),
 
     // 잎·복습
     LEAF_NOT_FOUND(HttpStatus.NOT_FOUND, "잎을 찾을 수 없습니다."),

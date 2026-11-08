@@ -106,6 +106,7 @@ class LeafReviewApiTest {
                 .andExpect(jsonPath("$.data.questions", hasSize(7)))
                 .andExpect(jsonPath("$.data.questions[*].number", contains(1, 2, 3, 4, 5, 6, 7)))
                 .andExpect(jsonPath("$.data.questions[0].options", hasSize(4)))
+                .andExpect(jsonPath("$.data.questions[*].difficulty", contains("EASY", "EASY", "NORMAL", "NORMAL", "HARD", "HARD", "ESSAY")))
                 .andExpect(jsonPath("$.data.questions[0].isCorrect").value(true))
                 .andExpect(jsonPath("$.data.questions[2].isCorrect").value(false))
                 .andExpect(jsonPath("$.data.questions[2].explanation").isNotEmpty())
@@ -144,7 +145,7 @@ class LeafReviewApiTest {
     }
 
     @Test
-    void 꽃봉오리와_재도전한_잎은_마지막_풀이의_문제를_보여_주고_세트_기록이_쌓인다() throws Exception {
+    void 잎눈과_재도전한_잎은_마지막_풀이의_문제를_보여_주고_세트_기록이_쌓인다() throws Exception {
         Long leafId = leaf(0);
         auth(get("/api/v1/leaves/" + leafId))
                 .andExpect(status().isOk())
@@ -189,7 +190,7 @@ class LeafReviewApiTest {
         Long newer = leaf(2);
         Long older = leaf(1);
         Long notYet = leaf(3);
-        leaf(6); // 초록잎은 복습 대상이 아니다
+        leaf(6); // 싱싱한 잎은 복습 대상이 아니다
         Long otherTree = createTree("물리", token);
         // 공부 순서를 바꿔 오래된 공부부터 나오는지 본다
         LocalDateTime now = KstTime.now();
@@ -313,7 +314,7 @@ class LeafReviewApiTest {
     // S2 복습 제출
 
     @Test
-    void 복습에_성공하면_초록잎이_되고_약한_주제가_모두_RECOVERED가_되고_총평이_바뀐다() throws Exception {
+    void 복습에_성공하면_싱싱한_잎이_되고_약한_주제가_모두_RECOVERED가_되고_총평이_바뀐다() throws Exception {
         Long leafId = leaf(2);
         String originalSummary = em.find(Leaf.class, leafId).getFeedbackSummary();
         makeAvailable(leafId);

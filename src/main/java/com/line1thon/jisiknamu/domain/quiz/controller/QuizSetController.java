@@ -63,7 +63,7 @@ public class QuizSetController {
 
             **화면**
             - 배치 팝업 "수학 나무 · 13번째 잎 · 단풍잎"은 `leaf.position`, `leaf.grade`와 나무 이름으로 만듭니다.
-            - 꽃봉오리 화면의 "먼저 다시 볼 부분"은 `feedback.weaknesses`를 씁니다.
+            - 잎눈 화면의 "먼저 다시 볼 부분"은 `feedback.weaknesses`를 씁니다.
             - AI 오류가 나면 저장하지 않으므로 같은 답으로 다시 제출할 수 있습니다.
             - `REQUEST_IN_PROGRESS`는 버튼을 두 번 누른 경우이므로 안내 없이 무시합니다.
 

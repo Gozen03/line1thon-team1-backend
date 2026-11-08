@@ -184,7 +184,7 @@ public class StudyService {
 
     /**
      * 나무마다 풀던 세트는 최대 1개다. 첫 풀이 세트를 지우면 그 공부 기록은 잎이 없어 볼 수 있는 곳이 없으므로
-     * 공부 기록과 사진도 함께 지운다. 재도전 세트는 꽃봉오리 잎이 공부 기록을 쓰므로 세트만 지운다.
+     * 공부 기록과 사진도 함께 지운다. 재도전 세트는 잎눈 잎이 공부 기록을 쓰므로 세트만 지운다.
      */
     private void removePendingQuizSets(Long treeId) {
         List<String> imageKeys = new ArrayList<>();

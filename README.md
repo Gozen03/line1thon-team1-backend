@@ -1,4 +1,4 @@
-# 지식 나무 키우기 – 메인 서버
+# 그루잇(GROOIT) – 메인 서버
 
 Spring Boot 4.1.2 · Java 17 · Gradle · MySQL 8.4
 

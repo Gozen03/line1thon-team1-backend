@@ -78,7 +78,8 @@ public class LeafService {
 
     private LeafDetailResponse.QuestionItem toQuestionItem(Answer answer) {
         Question question = answer.getQuestion();
-        return new LeafDetailResponse.QuestionItem(question.getNumber(), question.getTopic(), question.getType(),
+        return new LeafDetailResponse.QuestionItem(question.getNumber(), question.getTopic(), question.getDifficulty(),
+                question.getType(),
                 question.getContent(), jsonLists.toList(question.getOptions()), answer.getSelectedIndex(),
                 question.getAnswerIndex(), answer.getCorrect(), question.getExplanation(), answer.getEssayText(),
                 question.getModelAnswer());

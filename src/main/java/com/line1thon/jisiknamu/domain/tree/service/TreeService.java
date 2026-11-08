@@ -66,7 +66,7 @@ public class TreeService {
                 .map(tree -> {
                     TreeLeafStats stats = leafStats.get(tree.getId());
                     return new ForestResponse.TreeCard(tree.getId(), tree.getSubjectName(), tree.getStudyLevel(),
-                            tree.getShape(),
+                            tree.getShape(), tree.getBackgroundColor(),
                             stats == null ? 0 : stats.getLeafCount(),
                             KstTime.toOffset(lastStudied.get(tree.getId())),
                             stats == null ? 0 : stats.getReviewPendingCount());
@@ -95,9 +95,10 @@ public class TreeService {
                 .subjectName(subjectName)
                 .studyLevel(request.studyLevel())
                 .shape(request.treeShape())
+                .backgroundColor(request.backgroundColor())
                 .build());
         return new TreeCreateResponse(tree.getId(), tree.getSubjectName(), tree.getStudyLevel(), tree.getShape(),
-                0, KstTime.toOffset(tree.getCreatedAt()));
+                tree.getBackgroundColor(), 0, KstTime.toOffset(tree.getCreatedAt()));
     }
 
     @Transactional(readOnly = true)
@@ -111,12 +112,14 @@ public class TreeService {
                         leaf.isReviewed(), leaf.isReviewAvailable(now)))
                 .toList();
         long reviewPendingCount = items.stream().filter(TreeDetailResponse.LeafItem::reviewAvailable).count();
-        Long pendingQuizSetId = quizSetRepository
+        QuizSet pending = quizSetRepository
                 .findFirstByStudyTreeIdAndStatusAndTypeInOrderByIdDesc(treeId, QuizSetStatus.CREATED, PENDING_QUIZ_SET_TYPES)
-                .map(QuizSet::getId)
                 .orElse(null);
         return new TreeDetailResponse(tree.getId(), tree.getSubjectName(), tree.getStudyLevel(), tree.getShape(),
-                items.size(), reviewPendingCount, pendingQuizSetId, items);
+                tree.getBackgroundColor(), items.size(), reviewPendingCount,
+                pending == null ? null : pending.getId(),
+                pending == null ? null : KstTime.toOffset(pending.getStudy().getCreatedAt()),
+                items);
     }
 
     @Transactional
@@ -128,7 +131,11 @@ public class TreeService {
         if (request.studyLevel() != null) {
             tree.changeStudyLevel(request.studyLevel());
         }
-        return new TreeUpdateResponse(tree.getId(), tree.getSubjectName(), tree.getStudyLevel(), tree.getShape());
+        if (request.backgroundColor() != null) {
+            tree.changeBackgroundColor(request.backgroundColor());
+        }
+        return new TreeUpdateResponse(tree.getId(), tree.getSubjectName(), tree.getStudyLevel(), tree.getShape(),
+                tree.getBackgroundColor());
     }
 
     /**

@@ -83,11 +83,11 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
-                .info(new Info().title("지식 나무 키우기 메인 서버 API").version("v2.1").description(GUIDE + errorCodeTable()))
+                .info(new Info().title("그루잇(GROOIT) 메인 서버 API").version("v2.1").description(GUIDE + errorCodeTable()))
                 .addTagsItem(new Tag().name("회원").description("가입·로그인·내 정보. 닉네임과 숫자 비밀번호로 로그인합니다."))
                 .addTagsItem(new Tag().name("나무").description("과목 하나가 나무 한 그루입니다. 무료 3그루, 나무마다 잎 24개까지입니다."))
                 .addTagsItem(new Tag().name("공부·문제").description("공부 내용을 입력하면 7문제(객관식 6 + 서술형 1)를 받습니다."))
-                .addTagsItem(new Tag().name("잎·복습").description("지난 기록을 보고, 단풍잎·갈색잎을 3문제 복습으로 되살립니다."))
+                .addTagsItem(new Tag().name("잎·복습").description("지난 기록을 보고, 단풍잎·마른 잎을 3문제 복습으로 되살립니다."))
                 .addTagsItem(new Tag().name("광고").description("잎 배치 후·기록 열람 때 광고를 띄울지 알려 줍니다."))
                 .components(new Components().addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)

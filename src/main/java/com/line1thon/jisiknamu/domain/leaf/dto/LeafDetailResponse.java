@@ -1,6 +1,7 @@
 package com.line1thon.jisiknamu.domain.leaf.dto;
 
 import com.line1thon.jisiknamu.domain.leaf.entity.LeafGrade;
+import com.line1thon.jisiknamu.domain.quiz.entity.Difficulty;
 import com.line1thon.jisiknamu.domain.quiz.entity.QuestionType;
 import com.line1thon.jisiknamu.domain.quiz.entity.QuizSetType;
 import com.line1thon.jisiknamu.domain.study.entity.InputType;
@@ -34,6 +35,7 @@ public record LeafDetailResponse(
     public record QuestionItem(
             @Schema(description = "문제 번호", example = "4") int number,
             @Schema(description = "문제 주제", example = "판별식과 x절편 개수") String topic,
+            @Schema(description = "난이도: 쉬움 / 보통 / 어려움 / 서술형", example = "NORMAL") Difficulty difficulty,
             @Schema(description = "문제 형식", example = "MULTIPLE_CHOICE") QuestionType questionType,
             @Schema(description = "문제 본문", example = "y = x² − 2x + 5 의 x절편 개수는?") String content,
             @Schema(description = "보기 4개. 서술형은 null") List<String> options,

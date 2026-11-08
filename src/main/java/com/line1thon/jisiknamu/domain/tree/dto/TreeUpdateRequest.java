@@ -1,5 +1,6 @@
 package com.line1thon.jisiknamu.domain.tree.dto;
 
+import com.line1thon.jisiknamu.domain.tree.entity.BackgroundColor;
 import com.line1thon.jisiknamu.domain.tree.entity.StudyLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -10,5 +11,7 @@ public record TreeUpdateRequest(
         @Schema(description = "새 과목 이름. 앞뒤 공백을 지운 뒤 1~20자. 안 보내면 그대로", example = "고등 수학")
         String subjectName,
         @Schema(description = "새 공부 수준. 안 보내면 그대로", example = "HIGH")
-        StudyLevel studyLevel) {
+        StudyLevel studyLevel,
+        @Schema(description = "새 배경 색상. 안 보내면 그대로", example = "GREEN")
+        BackgroundColor backgroundColor) {
 }

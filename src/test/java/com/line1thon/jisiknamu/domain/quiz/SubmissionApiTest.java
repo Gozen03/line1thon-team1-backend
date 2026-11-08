@@ -91,8 +91,8 @@ class SubmissionApiTest {
             "6, GREEN, 완벽하게 이해했어요, false",
             "5, LIGHT_GREEN, 잘 이해했어요, false",
             "4, LIGHT_GREEN, 잘 이해했어요, false",
-            "3, AUTUMN, 조금 더 다지면 초록잎이 돼요, true",
-            "2, AUTUMN, 조금 더 다지면 초록잎이 돼요, true",
+            "3, AUTUMN, 조금 더 다지면 싱싱한 잎이 돼요, true",
+            "2, AUTUMN, 조금 더 다지면 싱싱한 잎이 돼요, true",
             "1, BROWN, 다시 공부가 필요해요, true",
             "0, BUD, 기록은 남기고 재도전, false"
     })
@@ -324,7 +324,7 @@ class SubmissionApiTest {
     // S3 재도전
 
     @Test
-    void 꽃봉오리면_새_7문제를_받고_풀던_문제로_보인다() throws Exception {
+    void 잎눈면_새_7문제를_받고_풀던_문제로_보인다() throws Exception {
         Long studyId = budStudy();
 
         String body = retry(studyId)
@@ -434,7 +434,7 @@ class SubmissionApiTest {
         expectError(mockMvc.perform(post("/api/v1/studies/" + studyId + "/retry")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + otherToken)), 403, "FORBIDDEN");
 
-        // 꽃봉오리가 아닌 잎
+        // 잎눈이 아닌 잎
         Long green = newStudy();
         Long greenStudyId = em.find(QuizSet.class, green).getStudy().getId();
         submit(green, answers(green, 6, "답")).andExpect(status().isOk());
@@ -482,7 +482,7 @@ class SubmissionApiTest {
     }
 
     @Test
-    void 재도전이_다시_0개면_꽃봉오리_그대로이고_또_재도전할_수_있다() throws Exception {
+    void 재도전이_다시_0개면_잎눈_그대로이고_또_재도전할_수_있다() throws Exception {
         Long studyId = budStudy();
         Long retrySetId = longAt(retry(studyId).andReturn().getResponse().getContentAsString(), "$.data.quizSetId");
         clearContext();
@@ -497,7 +497,7 @@ class SubmissionApiTest {
     }
 
     @Test
-    void 재도전_제출_때_잎이_꽃봉오리가_아니면_NOT_BUD_RESULT() throws Exception {
+    void 재도전_제출_때_잎이_잎눈이_아니면_NOT_BUD_RESULT() throws Exception {
         Long studyId = budStudy();
         Long retrySetId = longAt(retry(studyId).andReturn().getResponse().getContentAsString(), "$.data.quizSetId");
         em.flush();

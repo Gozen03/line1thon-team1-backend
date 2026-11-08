@@ -71,8 +71,8 @@ public class StudyController {
                 new StudyCreateRequest(inputType, images, content, memo)));
     }
 
-    @Operation(summary = "S3. 꽃봉오리 재도전 (새 7문제)", description = """
-            요청 본문이 없습니다. 이 공부의 잎이 꽃봉오리(`BUD`)일 때만 쓸 수 있고 횟수 제한은 없습니다.
+    @Operation(summary = "S3. 잎눈 재도전 (새 7문제)", description = """
+            요청 본문이 없습니다. 이 공부의 잎이 잎눈(`BUD`)일 때만 쓸 수 있고 횟수 제한은 없습니다.
 
             - 저장해 둔 공부 내용과, 공부할 때의 과목 이름·공부 수준으로 출제합니다. 사진을 다시 올리지 않습니다.
             - 약한 주제를 쉬움·보통 문제에 더 반영하고, 이전 세트와 같은 문제는 내지 않습니다.

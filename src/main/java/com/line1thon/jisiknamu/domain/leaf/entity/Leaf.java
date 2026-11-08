@@ -84,7 +84,7 @@ public class Leaf extends BaseTimeEntity {
         this.reviewDueAt = reviewDueAt;
     }
 
-    /** 복습 성공: 초록잎이 되고 총평을 다시 쓴다. 처음 등급은 그대로 둔다. */
+    /** 복습 성공: 싱싱한 잎이 되고 총평을 다시 쓴다. 처음 등급은 그대로 둔다. */
     public void recover(String feedbackSummary, LocalDateTime recoveredAt) {
         this.leafType = LeafGrade.GREEN;
         this.feedbackSummary = feedbackSummary;

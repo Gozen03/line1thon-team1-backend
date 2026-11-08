@@ -30,7 +30,7 @@ public class LeafController {
     private final ReviewService reviewService;
 
     @Operation(summary = "L2. 잎 상세 (그날 기록)", description = """
-            잎을 눌렀을 때 그날의 공부 내용, 문제와 내 답, 피드백을 줍니다. 꽃봉오리도 같은 API를 씁니다.
+            잎을 눌렀을 때 그날의 공부 내용, 문제와 내 답, 피드백을 줍니다. 잎눈도 같은 API를 씁니다.
 
             - `questions`는 잎의 등급을 정한 마지막 첫 풀이·재도전 세트의 7문제입니다. 화면은 틀린 문제를 먼저 2개 보여 주고 "7문제 모두 보기"로 펼칩니다.
             - `reviewed`·`reviewedAt`은 **복습에 성공했을 때만** 값이 있습니다. 실패한 복습은 `quizSets`에만 남습니다.
@@ -71,7 +71,7 @@ public class LeafController {
     }
 
     @Operation(summary = "R2. 복습 3문제 출제", description = """
-            요청 본문이 없습니다. 단풍잎·갈색잎이고 복습 시점이 됐을 때만 쓸 수 있습니다. 항상 객관식 3문제입니다.
+            요청 본문이 없습니다. 단풍잎·마른 잎이고 복습 시점이 됐을 때만 쓸 수 있습니다. 항상 객관식 3문제입니다.
 
             - 답은 **S2**로 제출합니다 (3개).
             - 제출하지 않은 복습 세트가 있으면 새로 만들지 않고 그 세트를 다시 줍니다 (복습 중 앱을 닫은 경우).

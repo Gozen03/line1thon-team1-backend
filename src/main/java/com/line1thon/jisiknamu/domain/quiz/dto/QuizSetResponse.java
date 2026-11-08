@@ -13,7 +13,7 @@ import java.util.List;
 public record QuizSetResponse(
         @Schema(description = "공부 기록 ID", example = "31") Long studyId,
         @Schema(description = "문제 세트 ID. 답 제출과 S4에 쓴다", example = "301") Long quizSetId,
-        @Schema(description = "세트 종류: 첫 풀이 / 꽃봉오리 재도전 / 복습", example = "INITIAL") QuizSetType quizSetType,
+        @Schema(description = "세트 종류: 첫 풀이 / 잎눈 재도전 / 복습", example = "INITIAL") QuizSetType quizSetType,
         @Schema(description = "나무 ID", example = "1") Long treeId,
         @Schema(description = "공부할 때의 과목 이름", example = "수학") String subjectName,
         @Schema(description = "공부할 때의 공부 수준", example = "HIGH") StudyLevel studyLevel,

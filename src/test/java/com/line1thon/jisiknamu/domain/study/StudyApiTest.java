@@ -295,7 +295,7 @@ class StudyApiTest {
     }
 
     @Test
-    void 풀던_재도전_세트는_세트만_지우고_꽃봉오리의_공부_기록은_남긴다() throws Exception {
+    void 풀던_재도전_세트는_세트만_지우고_잎눈의_공부_기록은_남긴다() throws Exception {
         Tree tree = em.find(Tree.class, treeId);
         Study budStudy = Study.builder().tree(tree).inputType(InputType.TEXT).textContent(TEXT).build();
         em.persist(budStudy);

@@ -324,6 +324,66 @@ class TreeApiTest {
         auth(get(TREES + "/" + treeId), token).andExpect(status().isOk());
     }
 
+    // 배경 색상, 풀던 문제 날짜
+
+    @Test
+    void 배경_색상은_안_보내면_BLUE이고_고른_색은_숲과_나무_화면에_나온다() throws Exception {
+        auth(json(post(TREES), body("수학", "HIGH", "BASIC")), token)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.backgroundColor").value("BLUE"));
+        String created = auth(json(post(TREES),
+                "{\"subjectName\":\"물리\",\"studyLevel\":\"HIGH\",\"treeShape\":\"BASIC\",\"backgroundColor\":\"PINK\"}"), token)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.backgroundColor").value("PINK"))
+                .andReturn().getResponse().getContentAsString();
+        Long pinkTree = ((Number) JsonPath.read(created, "$.data.treeId")).longValue();
+        em.flush();
+        em.clear();
+
+        auth(get(TREES), token)
+                .andExpect(jsonPath("$.data.trees[0].backgroundColor").value("BLUE"))
+                .andExpect(jsonPath("$.data.trees[1].backgroundColor").value("PINK"));
+        auth(get(TREES + "/" + pinkTree), token)
+                .andExpect(jsonPath("$.data.backgroundColor").value("PINK"));
+    }
+
+    @Test
+    void 배경_색상은_나무_수정으로_바꿀_수_있고_틀린_값은_INVALID_REQUEST() throws Exception {
+        Long treeId = createTree("수학");
+
+        auth(json(patch(TREES + "/" + treeId), "{\"backgroundColor\":\"YELLOW\"}"), token)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.backgroundColor").value("YELLOW"))
+                .andExpect(jsonPath("$.data.subjectName").value("수학"));
+        auth(json(patch(TREES + "/" + treeId), "{\"subjectName\":\"고등 수학\"}"), token)
+                .andExpect(jsonPath("$.data.backgroundColor").value("YELLOW"));
+
+        expectError(auth(json(patch(TREES + "/" + treeId), "{\"backgroundColor\":\"PURPLE\"}"), token), 400, "INVALID_REQUEST");
+        expectError(auth(json(post(TREES),
+                "{\"subjectName\":\"물리\",\"studyLevel\":\"HIGH\",\"treeShape\":\"BASIC\",\"backgroundColor\":\"PURPLE\"}"), token),
+                400, "INVALID_REQUEST");
+    }
+
+    @Test
+    void 풀던_문제가_있으면_그_공부_날짜를_주고_없으면_null() throws Exception {
+        Long treeId = createTree("수학");
+        auth(get(TREES + "/" + treeId), token)
+                .andExpect(jsonPath("$.data.pendingStudiedAt").value(nullValue()));
+
+        Study study = persistStudy(em.find(Tree.class, treeId));
+        persistQuizSet(study, null, QuizSetType.INITIAL, 6);
+        em.flush();
+        em.clear();
+        LocalDateTime studiedAt = em.find(Study.class, study.getId()).getCreatedAt();
+
+        String body = auth(get(TREES + "/" + treeId), token)
+                .andExpect(jsonPath("$.data.pendingQuizSetId").isNumber())
+                .andExpect(jsonPath("$.data.pendingStudiedAt", matchesPattern(OFFSET_TIME)))
+                .andReturn().getResponse().getContentAsString();
+        String pendingStudiedAt = JsonPath.read(body, "$.data.pendingStudiedAt");
+        assertThat(java.time.OffsetDateTime.parse(pendingStudiedAt)).isEqualTo(KstTime.toOffset(studiedAt));
+    }
+
     private Leaf addLeaf(Tree tree, int position, LeafGrade grade, LocalDateTime reviewDueAt) {
         Leaf leaf = Leaf.builder().tree(tree).study(persistStudy(tree)).position(position).grade(grade)
                 .firstCorrectCount(2).reviewDueAt(reviewDueAt).build();

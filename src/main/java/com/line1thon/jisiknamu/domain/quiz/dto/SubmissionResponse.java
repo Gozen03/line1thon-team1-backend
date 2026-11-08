@@ -25,16 +25,16 @@ public record SubmissionResponse(
             @Schema(description = "나무 ID", example = "1") Long treeId,
             @Schema(description = "자리 1~24", example = "13") int position,
             @Schema(description = "등급", example = "AUTUMN") LeafGrade grade,
-            @Schema(description = "등급 안내 문구", example = "조금 더 다지면 초록잎이 돼요") String message,
-            @Schema(description = "복습 대상인지 (단풍잎·갈색잎)", example = "true") boolean reviewTarget,
+            @Schema(description = "등급 안내 문구", example = "조금 더 다지면 싱싱한 잎이 돼요") String message,
+            @Schema(description = "복습 대상인지 (단풍잎·마른 잎)", example = "true") boolean reviewTarget,
             @Schema(description = "복습 가능 시각. 복습 대상이 아니면 null", example = "2026-11-01T20:00:00+09:00") OffsetDateTime reviewAvailableAt,
             @Schema(description = "이 나무의 전체 잎 수", example = "13") long treeLeafCount) {
     }
 
     public record Feedback(
-            @Schema(description = "AI 총평", example = "기본은 잘 잡혔어요. 조금만 더 다지면 초록잎이 될 수 있어요.") String summary,
+            @Schema(description = "AI 총평", example = "기본은 잘 잡혔어요. 조금만 더 다지면 싱싱한 잎이 될 수 있어요.") String summary,
             @Schema(description = "맞힌 문제의 주제 (중복 제거)") List<String> strengths,
-            @Schema(description = "틀린 문제의 주제 (중복 제거). 꽃봉오리 화면의 \"먼저 다시 볼 부분\"에 쓴다") List<String> weaknesses,
+            @Schema(description = "틀린 문제의 주제 (중복 제거). 잎눈 화면의 \"먼저 다시 볼 부분\"에 쓴다") List<String> weaknesses,
             @Schema(description = "서술형 AI 피드백", example = "꼭짓점이 최솟값이 되는 점이라는 걸 잘 설명했어요.") String essayFeedback) {
     }
 

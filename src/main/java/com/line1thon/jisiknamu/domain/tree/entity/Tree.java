@@ -43,16 +43,25 @@ public class Tree extends BaseTimeEntity {
     @Column(nullable = false)
     private TreeShape shape;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private BackgroundColor backgroundColor;
+
     @Column(name = "is_paid", nullable = false)
     private boolean paid;
 
     @Builder
-    private Tree(User user, String subjectName, StudyLevel studyLevel, TreeShape shape) {
+    private Tree(User user, String subjectName, StudyLevel studyLevel, TreeShape shape, BackgroundColor backgroundColor) {
         this.user = user;
         this.subjectName = subjectName;
         this.studyLevel = studyLevel;
         this.shape = shape;
+        this.backgroundColor = backgroundColor == null ? BackgroundColor.BLUE : backgroundColor;
         this.paid = false; // MVP는 결제가 없다
+    }
+
+    public void changeBackgroundColor(BackgroundColor backgroundColor) {
+        this.backgroundColor = backgroundColor;
     }
 
     public void changeSubjectName(String subjectName) {
