@@ -63,8 +63,8 @@ public class OpenApiConfig {
             - S1·S2·S3·R2는 AI를 기다리므로 로딩 화면을 띄우고, 프론트 타임아웃을 60초로 둡니다.
             - `REQUEST_IN_PROGRESS`(409)는 버튼을 두 번 누른 경우입니다. 안내 없이 무시합니다.
 
-            ### 지금 없는 API
-            A1(광고)은 아직 만드는 중입니다.
+            ### 진행 상황
+            API 20개를 모두 만들었습니다. 실제 AI 서버는 아직 연결 전이라 아래 Mock으로 동작합니다.
 
             ### AI Mock
             AI 서버 연결 전이라 S1·S2·S3·R2는 `(Mock)`이 붙은 가짜 문제와 피드백을 줍니다. 응답은 약 3초 뒤에 옵니다.
@@ -88,6 +88,7 @@ public class OpenApiConfig {
                 .addTagsItem(new Tag().name("나무").description("과목 하나가 나무 한 그루입니다. 무료 3그루, 나무마다 잎 24개까지입니다."))
                 .addTagsItem(new Tag().name("공부·문제").description("공부 내용을 입력하면 7문제(객관식 6 + 서술형 1)를 받습니다."))
                 .addTagsItem(new Tag().name("잎·복습").description("지난 기록을 보고, 단풍잎·갈색잎을 3문제 복습으로 되살립니다."))
+                .addTagsItem(new Tag().name("광고").description("잎 배치 후·기록 열람 때 광고를 띄울지 알려 줍니다."))
                 .components(new Components().addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)
                         .scheme("bearer")

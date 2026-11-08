@@ -66,5 +66,5 @@ s3:
   presigned-url-minutes: 10
 
 review:
-  delay-days: 3         # 시연은 0
-  retry-delay-days: 1   # 시연은 0
+  delay-days: ${REVIEW_DELAY_DAYS:3}               # 복습 대기 일수. 시연은 0
+  retry-delay-days: ${REVIEW_RETRY_DELAY_DAYS:1}   # 복습 실패 후 대기 일수. 시연은 0
