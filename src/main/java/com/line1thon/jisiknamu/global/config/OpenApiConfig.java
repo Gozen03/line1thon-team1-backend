@@ -83,7 +83,7 @@ public class OpenApiConfig {
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
-                .info(new Info().title("그루잇(GROOIT) 메인 서버 API").version("v2.1").description(GUIDE + errorCodeTable()))
+                .info(new Info().title("그루잇(GROOIT) 메인 서버 API").version("v2.2").description(GUIDE + errorCodeTable()))
                 .addTagsItem(new Tag().name("회원").description("가입·로그인·내 정보. 닉네임과 숫자 비밀번호로 로그인합니다."))
                 .addTagsItem(new Tag().name("나무").description("과목 하나가 나무 한 그루입니다. 무료 3그루, 나무마다 잎 24개까지입니다."))
                 .addTagsItem(new Tag().name("공부·문제").description("공부 내용을 입력하면 7문제(객관식 6 + 서술형 1)를 받습니다."))
