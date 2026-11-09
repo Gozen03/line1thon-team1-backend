@@ -1,5 +1,5 @@
--- 지식 나무 키우기 – 메인 서버 DB 스키마 (MySQL 8)
--- 기준: 이나연 님 ERD(ERD Cloud, 11/7) + 메인 서버 API 명세서 v2.1
+-- 그루잇(GROOIT) – 메인 서버 DB 스키마 (MySQL 8)
+-- 기준: 이나연 님 ERD(ERD Cloud, 11/7) + 메인 서버 API 명세서 v2.2 (11/9 trees.background_color 추가)
 -- ERD Cloud 내보내기에 빠진 AUTO_INCREMENT · UNIQUE · 외래 키(ON DELETE CASCADE) · 인덱스를 채웠다.
 -- 나무 삭제·회원 탈퇴 때 아래 기록이 모두 함께 지워진다.
 
