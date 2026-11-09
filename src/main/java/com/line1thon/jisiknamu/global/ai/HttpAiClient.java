@@ -2,6 +2,7 @@ package com.line1thon.jisiknamu.global.ai;
 
 import com.line1thon.jisiknamu.domain.quiz.entity.Difficulty;
 import com.line1thon.jisiknamu.domain.quiz.entity.QuestionType;
+import com.line1thon.jisiknamu.domain.study.entity.InputType;
 import com.line1thon.jisiknamu.global.error.BusinessException;
 import com.line1thon.jisiknamu.global.error.ErrorCode;
 import java.io.IOException;
@@ -38,6 +39,7 @@ public class HttpAiClient implements AiClient {
     private static final int QUIZ_SIZE = 7;
     private static final int OPTION_COUNT = 4;
     private static final int MAX_TOPIC_LENGTH = 100;
+    private static final int MAX_EXCLUDE_QUESTIONS = 50;
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -66,9 +68,16 @@ public class HttpAiClient implements AiClient {
 
     @Override
     public GeneratedQuiz generateQuiz(QuizGenerateRequest request) {
-        GeneratedQuizResponse response = post("/questions", request, GeneratedQuizResponse.class);
+        QuizGenerateRequest sent = new QuizGenerateRequest(request.quizSetType(), request.subjectName(),
+                request.studyLevel(), request.inputType(), request.imageUrls(), request.content(), request.memo(),
+                request.weakTopics(), recent(request.excludeQuestions()));
+        GeneratedQuizResponse response = post("/questions", sent, GeneratedQuizResponse.class);
         if (Boolean.FALSE.equals(response.readable())) {
             throw new BusinessException(ErrorCode.NOTE_UNREADABLE);
+        }
+        // 재도전·복습은 사진을 다시 읽지 않고 이 글로 출제하므로, 사진 공부면 꼭 있어야 한다
+        if (request.inputType() == InputType.IMAGE) {
+            require(hasText(response.extractedText()), "AI1 사진 공부인데 extractedText가 비어 있음");
         }
         List<GeneratedQuestion> questions = response.questions();
         require(questions != null && questions.size() == QUIZ_SIZE, "AI1 문제 수가 7개가 아님");
@@ -93,7 +102,10 @@ public class HttpAiClient implements AiClient {
 
     @Override
     public ReviewQuestionsResult generateReviewQuestions(ReviewQuestionsRequest request) {
-        ReviewQuestionsResult result = post("/review-questions", request, ReviewQuestionsResult.class);
+        ReviewQuestionsRequest sent = new ReviewQuestionsRequest(request.subjectName(), request.studyLevel(),
+                request.content(), request.memo(), request.weakTopics(), request.wrongQuestions(),
+                recent(request.excludeQuestions()), request.count());
+        ReviewQuestionsResult result = post("/review-questions", sent, ReviewQuestionsResult.class);
         List<GeneratedQuestion> questions = result.questions();
         require(questions != null && questions.size() == request.count(), "AI3 문제 수가 요청과 다름");
         for (int i = 0; i < questions.size(); i++) {
@@ -202,6 +214,17 @@ public class HttpAiClient implements AiClient {
 
     private void checkTopic(GeneratedQuestion question) {
         require(hasText(question.topic()) && question.topic().length() <= MAX_TOPIC_LENGTH, "topic이 1~100자가 아님");
+    }
+
+    /**
+     * AI 서버는 excludeQuestions를 50개까지만 받는다. 목록은 오래된 문제부터라 최근 50개를 보낸다.
+     */
+    static List<String> recent(List<String> excludeQuestions) {
+        if (excludeQuestions == null || excludeQuestions.size() <= MAX_EXCLUDE_QUESTIONS) {
+            return excludeQuestions;
+        }
+        return List.copyOf(excludeQuestions.subList(excludeQuestions.size() - MAX_EXCLUDE_QUESTIONS,
+                excludeQuestions.size()));
     }
 
     private static boolean hasText(String value) {

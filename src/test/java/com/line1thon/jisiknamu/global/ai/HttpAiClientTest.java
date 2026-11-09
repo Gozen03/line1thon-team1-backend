@@ -112,7 +112,7 @@ class HttpAiClientTest {
 
     @Test
     void AI1_문제가_7개가_아니면_저장하지_않고_AI_SERVER_ERROR() {
-        String six = FakeAiServer.quizData(null).replaceFirst("\\{\"number\":1,[^}]*},", "");
+        String six = FakeAiServer.quizData("읽은 내용").replaceFirst("\\{\"number\":1,[^}]*},", "");
         server.respondSuccess(six);
 
         assertError(() -> client.generateQuiz(imageQuizRequest()), ErrorCode.AI_SERVER_ERROR);
@@ -120,25 +120,67 @@ class HttpAiClientTest {
 
     @Test
     void AI1_보기가_4개가_아니거나_정답_위치가_틀리면_AI_SERVER_ERROR() {
-        server.respondSuccess(FakeAiServer.quizData(null).replaceFirst("\\[\"가\",\"나\",\"다\",\"라\"]", "[\"가\",\"나\"]"));
+        server.respondSuccess(FakeAiServer.quizData("읽은 내용").replaceFirst("\\[\"가\",\"나\",\"다\",\"라\"]", "[\"가\",\"나\"]"));
         assertError(() -> client.generateQuiz(imageQuizRequest()), ErrorCode.AI_SERVER_ERROR);
 
-        server.respondSuccess(FakeAiServer.quizData(null).replaceFirst("\"answerIndex\":1", "\"answerIndex\":4"));
+        server.respondSuccess(FakeAiServer.quizData("읽은 내용").replaceFirst("\"answerIndex\":1", "\"answerIndex\":4"));
         assertError(() -> client.generateQuiz(imageQuizRequest()), ErrorCode.AI_SERVER_ERROR);
     }
 
     @Test
     void AI1_topic이_100자를_넘으면_AI_SERVER_ERROR() {
-        server.respondSuccess(FakeAiServer.quizData(null).replaceFirst("주제 1", "가".repeat(101)));
+        server.respondSuccess(FakeAiServer.quizData("읽은 내용").replaceFirst("주제 1", "가".repeat(101)));
 
         assertError(() -> client.generateQuiz(imageQuizRequest()), ErrorCode.AI_SERVER_ERROR);
     }
 
     @Test
     void AI1_enum이_명세에_없는_값이면_AI_SERVER_ERROR() {
-        server.respondSuccess(FakeAiServer.quizData(null).replaceFirst("\"EASY\"", "\"VERY_EASY\""));
+        server.respondSuccess(FakeAiServer.quizData("읽은 내용").replaceFirst("\"EASY\"", "\"VERY_EASY\""));
 
         assertError(() -> client.generateQuiz(imageQuizRequest()), ErrorCode.AI_SERVER_ERROR);
+    }
+
+    @Test
+    void AI1_사진_공부인데_extractedText가_비어_있으면_AI_SERVER_ERROR() {
+        server.respondSuccess(FakeAiServer.quizData(null));
+        assertError(() -> client.generateQuiz(imageQuizRequest()), ErrorCode.AI_SERVER_ERROR);
+
+        server.respondSuccess(FakeAiServer.quizData("  "));
+        assertError(() -> client.generateQuiz(imageQuizRequest()), ErrorCode.AI_SERVER_ERROR);
+    }
+
+    @Test
+    void AI1_텍스트_공부는_extractedText가_없어도_된다() {
+        server.respondSuccess(FakeAiServer.quizData(null));
+
+        GeneratedQuiz quiz = client.generateQuiz(new QuizGenerateRequest(QuizSetType.INITIAL, "수학", StudyLevel.HIGH,
+                InputType.TEXT, List.of(), "공부 내용", null, List.of(), List.of()));
+
+        assertThat(quiz.extractedText()).isNull();
+        assertThat(quiz.questions()).hasSize(7);
+    }
+
+    @Test
+    void AI1_이전_문제가_50개를_넘으면_최근_50개만_보낸다() {
+        server.respondSuccess(FakeAiServer.quizData(null));
+        List<String> exclude = java.util.stream.IntStream.range(0, 60).mapToObj(i -> "문제 " + i).toList();
+
+        client.generateQuiz(new QuizGenerateRequest(QuizSetType.RETRY, "수학", StudyLevel.HIGH, InputType.TEXT,
+                List.of(), "공부 내용", null, List.of("주제 1"), exclude));
+
+        JsonNode sent = mapper.readTree(server.last().body()).get("excludeQuestions");
+        assertThat(sent).hasSize(50);
+        assertThat(sent.get(0).asString()).isEqualTo("문제 10");
+        assertThat(sent.get(49).asString()).isEqualTo("문제 59");
+    }
+
+    @Test
+    void 이전_문제가_50개_이하면_그대로_보낸다() {
+        List<String> exclude = List.of("가", "나");
+
+        assertThat(HttpAiClient.recent(exclude)).isSameAs(exclude);
+        assertThat(HttpAiClient.recent(null)).isNull();
     }
 
     // 에러 변환 (AI 서버 API 명세 1장)
@@ -177,7 +219,7 @@ class HttpAiClientTest {
     @Test
     void 응답이_늦으면_AI_TIMEOUT() {
         HttpAiClient fast = new HttpAiClient(mapper, server.url(), KEY, Duration.ofMillis(300));
-        server.respondSuccess(FakeAiServer.quizData(null));
+        server.respondSuccess(FakeAiServer.quizData("읽은 내용"));
         server.delay(1500);
 
         assertError(() -> fast.generateQuiz(imageQuizRequest()), ErrorCode.AI_TIMEOUT);
@@ -249,6 +291,22 @@ class HttpAiClientTest {
         assertThat(wrong.get("answerIndex").asInt()).isEqualTo(0);
         assertThat(wrong.has("selectedIndex")).isTrue();
         assertThat(wrong.get("selectedIndex").isNull()).isTrue();
+    }
+
+    @Test
+    void AI3_이전_복습_문제가_50개를_넘으면_최근_50개만_보낸다() {
+        server.respondSuccess("{\"questions\":[" + FakeAiServer.multipleChoice(1, "NORMAL", "주제 A") + ","
+                + FakeAiServer.multipleChoice(2, "NORMAL", "주제 A") + ","
+                + FakeAiServer.multipleChoice(3, "NORMAL", "주제 A") + "]}");
+        List<String> exclude = java.util.stream.IntStream.range(0, 51).mapToObj(i -> "복습 " + i).toList();
+
+        client.generateReviewQuestions(new ReviewQuestionsRequest("수학", StudyLevel.HIGH, "공부 내용", null,
+                List.of("주제 A"), List.of(), exclude, 3));
+
+        JsonNode sent = mapper.readTree(server.last().body()).get("excludeQuestions");
+        assertThat(sent).hasSize(50);
+        assertThat(sent.get(0).asString()).isEqualTo("복습 1");
+        assertThat(sent.get(49).asString()).isEqualTo("복습 50");
     }
 
     @Test
