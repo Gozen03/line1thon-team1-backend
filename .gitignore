@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.*.example
 !.env.main.example
 application-local.yml
 

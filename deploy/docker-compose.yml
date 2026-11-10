@@ -25,15 +25,17 @@ services:
       JAVA_TOOL_OPTIONS: "-Xmx512m"
     expose:
       - "8080"
-    # depends_on: [ai]   # AI 서버를 올릴 때 푼다
+    # 시작 순서만 맞춘다. AI 서버가 죽어 있어도 메인 서버는 뜨고, AI가 필요한 API만 AI_SERVER_ERROR를 준다
+    depends_on:
+      - ai
     restart: always
     logging: *logging
 
-  # 2차 배포에서 푼다
-  # ai:
-  #   image: ghcr.io/<OWNER>/ai-server:latest
-  #   env_file: .env.ai
-  #   expose:
-  #     - "8000"
-  #   restart: always
-  #   logging: *logging
+  # AI 서버 (ai-server/). 외부에 열지 않고 main만 http://ai:8000 으로 부른다
+  ai:
+    image: ghcr.io/gozen03/ai-server:latest
+    env_file: .env.ai
+    expose:
+      - "8000"
+    restart: always
+    logging: *logging
