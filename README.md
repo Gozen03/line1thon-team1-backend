@@ -2,6 +2,15 @@
 
 Spring Boot 4.1.2 · Java 17 · Gradle · MySQL 8.4
 
+이 레포에는 서버 두 개가 있다.
+
+| 폴더 | 서버 | 담당 |
+| --- | --- | --- |
+| 맨 위 (`src/`, `build.gradle` 등) | 메인 서버 (Spring Boot) | 고재민 |
+| `ai-server/` | AI 서버 (Django) | 이나연 |
+
+프론트는 메인 서버만 부르고, AI 서버는 메인 서버만 부른다 (같은 EC2의 Docker 내부 네트워크).
+
 ## 로컬 실행
 
 1. `.env.example`을 복사해 `.env`를 만들고 값을 채운다 (`.env`는 깃에 올리지 않음).

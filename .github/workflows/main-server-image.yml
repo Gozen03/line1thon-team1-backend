@@ -5,6 +5,10 @@ name: main-server-image
 on:
   push:
     branches: [main]
+    # AI 서버(ai-server/)만 바뀐 push에서는 돌지 않는다. AI 서버는 ai-server.yml이 맡는다
+    paths-ignore:
+      - "ai-server/**"
+      - ".github/workflows/ai-server.yml"
   workflow_dispatch:
 
 permissions:
