@@ -322,3 +322,41 @@ class RealPathTests(SimpleTestCase):
             res = self.post("/ai/v1/questions", body)
         self.assertEqual(res.status_code, 400)
         self.assertEqual(res.json()["error"]["code"], "IMAGE_FETCH_FAILED")
+
+
+@override_settings(AI_MOCK=False, AI_INTERNAL_KEY=KEY, OPENAI_API_KEY="fake")
+class EnoughContentTests(SimpleTestCase):
+    """모델이 충분한 내용에도 enoughContent=false를 줄 때 (11/10 재민 님 제보)."""
+
+    LONG = ("이차함수 y = ax² + bx + c 의 꼭짓점은 완전제곱식으로 바꿔 구한다. "
+            "판별식 D = b² − 4ac 의 부호로 x축과 만나는 점의 개수를 판단한다. ") * 3
+
+    def post(self, body):
+        return self.client.post("/ai/v1/questions", data=json.dumps(body), content_type="application/json", **H)
+
+    def test_long_text_false_is_retried(self):
+        body = dict(TEXT_REQ, content=self.LONG)
+        good = ai_mock.question_set(QuestionsRequest.model_validate(body))
+        bad = LLMQuestionSet(readable=True, enoughContent=False, questions=[])
+        with umock.patch("ai.llm.generate_json", side_effect=[bad, good]) as gen:
+            res = self.post(body)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(gen.call_count, 2)
+        self.assertIn("충분함", gen.call_args_list[1].args[1])
+
+    def test_long_text_false_twice_is_retryable_error(self):
+        body = dict(TEXT_REQ, content=self.LONG)
+        bad = LLMQuestionSet(readable=True, enoughContent=False, questions=[])
+        with umock.patch("ai.llm.generate_json", side_effect=[bad, bad]):
+            res = self.post(body)
+        self.assertEqual(res.status_code, 502)
+        self.assertEqual(res.json()["error"]["code"], "AI_GENERATION_FAILED")
+
+    def test_short_text_false_is_content_too_short(self):
+        body = dict(TEXT_REQ, content="이차함수 꼭짓점을 공부했다.")
+        bad = LLMQuestionSet(readable=True, enoughContent=False, questions=[])
+        with umock.patch("ai.llm.generate_json", return_value=bad) as gen:
+            res = self.post(body)
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(res.json()["error"]["code"], "CONTENT_TOO_SHORT")
+        self.assertEqual(gen.call_count, 1)

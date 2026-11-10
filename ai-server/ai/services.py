@@ -14,6 +14,7 @@ from .validation import check_initial, check_review, clip, shuffle_options
 log = logging.getLogger(__name__)
 KST = ZoneInfo("Asia/Seoul")
 EMPTY_ESSAY_FEEDBACK = "답을 적지 않았어요. 모범답안을 보고 핵심을 정리해 보세요."
+MIN_TRUSTED_CHARS = 100  # 공부 내용이 이 이상이면 enoughContent=false를 믿지 않고 1회 재요청
 
 
 class Budget:
@@ -94,10 +95,19 @@ def make_questions(req) -> dict:
     def check(result: LLMQuestionSet):
         if not result.readable:
             raise note_unreadable() if req.inputType == "IMAGE" else content_too_short()
-        if not result.enoughContent:
-            raise content_too_short()
         holder["extracted"] = result.extractedText
+        if not result.enoughContent:
+            # 모델이 충분한 내용도 가끔 false로 줌 -> 내용이 길면 믿지 않고 다시 요청
+            source = req.content if req.inputType == "TEXT" else result.extractedText
+            length = len((source or "").strip())
+            if length < MIN_TRUSTED_CHARS:
+                raise content_too_short()
+            return result.questions, [
+                f"enoughContent를 false로 했지만 공부 내용이 {length}자로 충분함. "
+                "enoughContent=true로 하고, 같은 개념을 정의·적용·계산·비교 등 다른 각도로 물어 7문제를 만들 것"
+            ]
         questions, problems = check_initial(result.questions, req.excludeQuestions)
+        # 사진이면 extractedText가 꼭 있어야 함 (메인 서버가 재도전·복습 출제에 다시 씀)
         if req.inputType == "IMAGE" and not (result.extractedText or "").strip():
             problems.append("사진 입력인데 extractedText가 비어 있음. 사진 속 공부 내용을 옮겨 적을 것")
         return questions, problems
