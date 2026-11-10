@@ -66,8 +66,7 @@ public class QuizSetController {
             - 잎눈 화면의 "먼저 다시 볼 부분"은 `feedback.weaknesses`를 씁니다.
             - AI 오류가 나면 저장하지 않으므로 같은 답으로 다시 제출할 수 있습니다.
             - `REQUEST_IN_PROGRESS`는 버튼을 두 번 누른 경우이므로 안내 없이 무시합니다.
-
-            AI 에러를 확인하려면 서술형 답에 `[mock:error]` 또는 `[mock:timeout]`을 넣으세요.
+            - 첫 풀이·재도전은 AI가 총평을 쓰느라 약 3초, 복습 성공은 약 2초 걸립니다.
             """)
     @ApiErrors({ErrorCode.INVALID_REQUEST, ErrorCode.ANSWER_COUNT_MISMATCH, ErrorCode.FORBIDDEN, ErrorCode.QUIZ_SET_NOT_FOUND,
             ErrorCode.ALREADY_SUBMITTED, ErrorCode.REQUEST_IN_PROGRESS, ErrorCode.NOT_BUD_RESULT, ErrorCode.TREE_FULL,

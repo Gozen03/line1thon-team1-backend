@@ -50,7 +50,7 @@ public class StudyController {
             - `TREE_FULL`: "나무가 다 자랐어요. 새 나무에서 이어서 공부해 주세요."를 보여 줍니다.
             - `REQUEST_IN_PROGRESS`: 버튼을 두 번 누른 경우이므로 안내 없이 무시합니다.
 
-            AI 연결 전이라 지금은 가짜 문제를 줍니다. 에러를 확인하는 방법은 맨 위 **AI Mock**을 보세요.
+            실제 AI가 문제를 만들어 텍스트는 약 10~13초, 사진 5장은 약 14초 걸립니다. 에러를 확인하는 방법은 맨 위 **에러 화면 확인**을 보세요.
             """)
     @ApiErrors({ErrorCode.INVALID_REQUEST, ErrorCode.STUDY_INPUT_EMPTY, ErrorCode.IMAGE_INVALID, ErrorCode.FORBIDDEN,
             ErrorCode.TREE_NOT_FOUND, ErrorCode.TREE_FULL, ErrorCode.REQUEST_IN_PROGRESS, ErrorCode.NOTE_UNREADABLE,
