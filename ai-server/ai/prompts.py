@@ -43,7 +43,8 @@ def questions_system(req) -> str:
 {COMMON_RULES}
 [판단]
 - 사진이 흐리거나 공부 내용이 아니라서 읽을 수 없으면 readable=false, questions는 빈 배열.
-- 내용이 너무 적어 7문제를 만들 수 없으면 enoughContent=false, questions는 빈 배열.
+- enoughContent는 거의 항상 true다. 개념이 1~2개뿐이어도 정의·적용·계산·비교처럼 다른 각도로 물으면 7문제를 만들 수 있다.
+  공부 내용이 한두 문장(약 50자 미만)뿐이거나 공부와 관계없는 글일 때만 false로 하고 questions는 빈 배열로 둔다.
 - 사진을 읽었으면 extractedText에 사진 속 공부 내용을 빠짐없이 옮겨 적는다. 텍스트 입력이면 null.
 {retry}"""
 
