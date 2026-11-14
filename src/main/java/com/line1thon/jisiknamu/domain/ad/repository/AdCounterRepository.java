@@ -17,6 +17,7 @@ public interface AdCounterRepository extends JpaRepository<AdCounter, AdCounterI
             """)
     void increment(@Param("userId") Long userId, @Param("adType") String adType);
 
-    @Query(nativeQuery = true, value = "select view_count from ad_counters where user_id = :userId and ad_type = :adType")
-    int findViewCount(@Param("userId") Long userId, @Param("adType") String adType);
+    // 모든 광고 위치를 합친 회원의 전체 횟수
+    @Query(nativeQuery = true, value = "select coalesce(sum(view_count), 0) from ad_counters where user_id = :userId")
+    int sumViewCount(@Param("userId") Long userId);
 }

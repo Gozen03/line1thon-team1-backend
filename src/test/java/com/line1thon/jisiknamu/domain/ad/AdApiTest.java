@@ -35,8 +35,8 @@ class AdApiTest {
     }
 
     @Test
-    void 첫_번째와_3의_배수_번째에만_광고를_띄운다() throws Exception {
-        boolean[] expected = {true, false, true, false, false, true, false, false, true};
+    void 전체_1_4_7_10번째에만_광고를_띄운다() throws Exception {
+        boolean[] expected = {true, false, false, true, false, false, true, false, false, true};
         for (int i = 0; i < expected.length; i++) {
             view(token, "LEAF_PLACEMENT")
                     .andExpect(status().isOk())
@@ -47,18 +47,38 @@ class AdApiTest {
     }
 
     @Test
-    void 횟수는_위치별_회원별로_따로_센다() throws Exception {
-        view(token, "LEAF_PLACEMENT");
-        view(token, "LEAF_PLACEMENT");
+    void 잎_배치와_기록_열람을_합쳐서_센다() throws Exception {
+        // 배치 1(광고) → 기록 2 → 기록 3 → 배치 4(광고) → 기록 5 → 배치 6 → 기록 7(광고)
+        String[] placements = {"LEAF_PLACEMENT", "RECORD_VIEW", "RECORD_VIEW", "LEAF_PLACEMENT",
+                "RECORD_VIEW", "LEAF_PLACEMENT", "RECORD_VIEW"};
+        boolean[] expected = {true, false, false, true, false, false, true};
+        for (int i = 0; i < placements.length; i++) {
+            view(token, placements[i])
+                    .andExpect(jsonPath("$.data.adPlacement").value(placements[i]))
+                    .andExpect(jsonPath("$.data.count").value(i + 1))
+                    .andExpect(jsonPath("$.data.showAd").value(expected[i]));
+        }
+    }
 
+    @Test
+    void 두_위치에서_연달아_광고가_나오지_않는다() throws Exception {
+        view(token, "LEAF_PLACEMENT").andExpect(jsonPath("$.data.showAd").value(true));
         view(token, "RECORD_VIEW")
+                .andExpect(jsonPath("$.data.count").value(2))
+                .andExpect(jsonPath("$.data.showAd").value(false));
+    }
+
+    @Test
+    void 횟수는_회원별로_따로_센다() throws Exception {
+        view(token, "LEAF_PLACEMENT");
+        view(token, "RECORD_VIEW");
+
+        view(otherToken, "RECORD_VIEW")
                 .andExpect(jsonPath("$.data.count").value(1))
                 .andExpect(jsonPath("$.data.showAd").value(true));
-        view(otherToken, "LEAF_PLACEMENT")
-                .andExpect(jsonPath("$.data.count").value(1));
         view(token, "LEAF_PLACEMENT")
                 .andExpect(jsonPath("$.data.count").value(3))
-                .andExpect(jsonPath("$.data.showAd").value(true));
+                .andExpect(jsonPath("$.data.showAd").value(false));
     }
 
     @Test
