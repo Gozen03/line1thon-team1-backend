@@ -26,15 +26,14 @@
 ## 구조
 
 ```
- [프론트 (Vercel)]
-        │ HTTPS
-        ▼
- ┌─────────── AWS EC2 · Docker Compose ───────────┐
- │  nginx ──▶ 메인 서버 ──(내부망)──▶ AI 서버    │──▶ OpenAI
- │            (Spring Boot)          (Django)     │
- └────────────────┬───────────────────────────────┘
-                  ├──▶ RDS (MySQL 8.4)
-                  └──▶ S3 (노트 사진)
+프론트 (Vercel)
+  │  HTTPS
+  ▼
+[ AWS EC2 · Docker Compose ]
+  nginx  ──▶  메인 서버 (Spring Boot)  ──내부망──▶  AI 서버 (Django)  ──▶  OpenAI
+                │
+                ├──▶  RDS (MySQL 8.4)
+                └──▶  S3 (노트 사진)
 ```
 
 | 폴더 | 서버 | 담당 | 하는 일 |
