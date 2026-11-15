@@ -25,16 +25,16 @@
 
 ## 구조
 
-```mermaid
-flowchart LR
-    F[프론트<br/>Vercel] -- HTTPS --> N[nginx]
-    subgraph EC2 [AWS EC2 · Docker Compose]
-        N --> M[메인 서버<br/>Spring Boot]
-        M -- 내부망 --> A[AI 서버<br/>Django]
-    end
-    M --> DB[(RDS<br/>MySQL 8.4)]
-    M --> S3[(S3<br/>노트 사진)]
-    A --> O[OpenAI]
+```
+ [프론트 (Vercel)]
+        │ HTTPS
+        ▼
+ ┌─────────── AWS EC2 · Docker Compose ───────────┐
+ │  nginx ──▶ 메인 서버 ──(내부망)──▶ AI 서버    │──▶ OpenAI
+ │            (Spring Boot)          (Django)     │
+ └────────────────┬───────────────────────────────┘
+                  ├──▶ RDS (MySQL 8.4)
+                  └──▶ S3 (노트 사진)
 ```
 
 | 폴더 | 서버 | 담당 | 하는 일 |
